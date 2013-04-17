@@ -75,10 +75,10 @@ class AppController:
         lista_clientes.SetStringItem(idx, 3, "%s" % item.getSaldo()) 
 
         if item.getEstado() == 'moroso':
-            lista_clientes.SetItemBAckgroundColor(idx, "red")
+            lista_clientes.SetItemBAckgroundColour(idx, "red")
 
         if item.getEstado() == 'tardio':
-            lista_clientes.SetItemBAckgroundColor(idx, "yellow")
+            lista_clientes.SetItemBAckgroundColour(idx, "yellow")
 
 
     def agregarPrendaALista(self, item, indx=-1):
@@ -92,10 +92,14 @@ class AppController:
         lista_prendas.SetStringItem(idx, 2, "%s" % item.getPrecio()) 
 
         if item.getEstado() == 'vendida':
-            lista_prendas.SetItemBAckgroundColor(idx, "red")
+            lista_prendas.SetItemBAckgroundColour(idx, "red")
 
         if item.getEstado() == 'condicional':
-            lista_prendas.SetItemBAckgroundColor(idx, "yellow")
+            lista_prendas.SetItemBAckgroundColour(idx, "yellow")
+
+        #vemos si la prenda esta actualmente en el carrito
+        if self.carrito.enCarrito(item):
+            lista_prendas.SetItemBackgroundColour(idx, "green")
 
 
     def agregarClientesActivos(self, clientes=[]):
@@ -191,21 +195,23 @@ class AppController:
         pub.subscribe(self.carritoVaciado, "CARRITO_VACIADO")
         
         
-    def mostrarDetallePrenda(self):
+    def mostrarDetallePrenda(self, event):
 
         seleccionado = self.main_window.lista_prendas.GetFocusedItem()
         
         if seleccionado != -1:
-            codigo_prenda = self.main_window.lista_prendas.GetItem(seleccionado,0)
+            item = self.main_window.lista_prendas.GetItem(seleccionado,0)
+            codigo_prenda = item.GetText()
             prenda = self.prendas.getPrendaPorCodigo(int(codigo_prenda))
             controlador_detalle_prenda = DetallePrendaController(prenda, self.main_window)
-
+  
     def eliminarPrenda(self, event):
 
         seleccionado = self.main_window.lista_prendas.GetFocusedItem()
 
         if seleccionado != -1:
-            codigo_prenda = self.main_window.lista_prendas.GetItem(seleccionado,0)
+            item = self.main_window.lista_prendas.GetItem(seleccionado,0)
+            codigo_prenda = item.GetText()
             prenda = self.prendas.getPrendaPorCodigo(int(codigo_prenda))
             
             try:
@@ -233,8 +239,8 @@ class AppController:
             prenda = self.prendas.getPrendaPorCodigo(int(codigo_prenda))
             
             try:
-                carrito.addOrDeletePrenda(prenda)
-            except NameError:
+                self.carrito.addOrDeletePrenda(prenda)
+            except NameError('prenda_no_disponible'):
                 error_dialog = wx.MessageDialog(self.main_window, "No puede vender una prenda vendida o en condicional", "Advertencia", wx.ICON_INFORMATION)
                 error_dialog.ShowModal()
                 error_dialog.Destroy()
@@ -258,27 +264,35 @@ class AppController:
         if self.main_window.texto_buscar_prendas.GetValue() == '':
             self.main_window.texto_buscar_prendas.SetValue('Buscar...')
 
+            self.agregarPrendasActivas()
+
     def buscarPrendas(self, event):
         seleccionado = self.main_window.radio_box_prendas.GetSelection()
-        prendas_activas = self.prendas.getPrendasActivas(self.configuracion)
+        prendas_activas_lista = self.prendas.getPrendasActivas(self.configuracion)
+
+        prendas_activas = ListaPrendas()
+
+        #convierto la lista en una lista prendas para poder buscar
+        for prenda in prendas_activas_lista:
+            prendas_activas.addPrenda(prenda)
+
         value = self.main_window.texto_buscar_prendas.GetValue()
-        lista_a_cargar = ListaPrendas()
+        lista_a_cargar = []
 
         if seleccionado == 0:
-            prenda_buscada = prendas_activas.getPrendaPorCodigo(value)
+            prenda_buscada = prendas_activas.getPrendaPorCodigo(int(value))
             #como solo devuelve un elemnto lo agrego a la lista
-            lista_a_cargar.addPrenda(prenda_buscada)
+            lista_a_cargar.append(prenda_buscada)
 
         elif seleccionado == 1:
             prenda_buscada = prendas_activas.findPrendaPorNombre(value)
             #como devuelve mas de un elemento los agrego con un for
             for prenda in prenda_buscada:
-                lista_a_cargar.addPrenda(prenda)
+                lista_a_cargar.append(prenda)
 
         self.agregarPrendasActivas(lista_a_cargar)
 
-
-    
+   
     #metodos de la pestania clientes---------------------------------------------
 
     def mostrarDetalleCliente(self, event):
@@ -350,12 +364,7 @@ class AppController:
 
     def prendaActualizada(self, message):
     
-        for idx in range(self.main_window.lista_prendas.GetItemCount()): 
-            item = self.main_window.lista_prendas.GetItem(idx, 0) 
-            if item.GetText() == message.data.getDni():
-                self.main_window.lista_prendas.DeleteItem(item)
-                self.agregarPrendaALista(message.data, idx)
-                break
+        self.agregarPrendasActivas()
 
     def clienteAgregado(self, message):
 
@@ -370,12 +379,8 @@ class AppController:
         self.agregarPrendaALista(message.data)
 
     def prendaEliminada(self, message):
-    
-        for idx in range(self.main_window.lista_prendas.GetItemCount()): 
-            item = self.main_window.lista_prendas.GetItem(idx, 0) 
-            if item.GetText() == message.data.getDni():
-                self.main_window.lista_prendas.DeleteItem(item)
-                break
+        
+        self.agregarPrendasActivas()
 
 
     def actualizadaConfiguracionPrendas(self, message):
@@ -389,13 +394,13 @@ class AppController:
         seleccionado = self.main_window.lista_prendas.GetFocusedItem()
 
         if seleccionado != -1:
-            self.main_window.lista_prendas.SetItemBackgroundColor(seleccionado, "green")    
+            self.main_window.lista_prendas.SetItemBackgroundColour(seleccionado, "green")    
 
     def prendaEliminadaCarrito(self, message):
         seleccionado = self.main_window.lista_prendas.GetFocusedItem()
 
         if seleccionado != -1:
-            self.main_window.lista_prendas.SetItemBackgroundColor(seleccionado, "white")
+            self.main_window.lista_prendas.SetItemBackgroundColour(seleccionado, "white")
 
     def carritoVaciado(self, message):
         self.agregarPrendasActivas()
@@ -502,13 +507,13 @@ class AppController:
 
         for prenda in self.prendas.getPrendas():
             
-            total_inversion += prenda.precio
+            total_inversion += prenda.costo
 
             if prenda.getEstado() == 'vendida':
                 total_ganancias += (prenda.precio - prenda.costo)
 
             if (prenda.getEstado() == 'disponible') or (prenda.getEstado() == 'condicional'):
-                total_capital_en_prendas += prenda.precio
+                total_capital_en_prendas += prenda.costo
 
         for cliente in self.clientes.getClientes():
 
@@ -759,7 +764,7 @@ class InformeTextoController:
         self.correos = correos
         self.informe_window = InformeTextoFrame(padre, -1, "Informe")
         
-
+        self.informe_window.Centre()
         self.informe_window.text_titulo.SetValue(correos)
         self.informe_window.label_titulo.SetLabel(titulo)
         self.informe_window.Show()
@@ -777,6 +782,7 @@ class InformeListaController:
         self.telefonos = telefonos
         self.informe_window = InformeListaFrame(padre, -1, "Informe")
         self.initUi()
+        self.informe_window.Centre()
         
         self.informe_window.Show()
         self.informe_window.label_titulo.SetLabel(titulo)
@@ -873,7 +879,7 @@ class DetallePrendaController:
 
     def __init__(self, prenda, padre):
 
-        self.prenda = prendas
+        self.prenda = prenda
         self.detalle_window = PrendaFrame(padre, -1, "Detalle Prenda %s" %prenda.getCodigo())
         self.detalle_window.Centre()
         self.initUi()
@@ -883,11 +889,11 @@ class DetallePrendaController:
 
         self.detalle_window.Show()
 
-    def initui(self):
+    def initUi(self):
         self.detalle_window.texto_nombre.SetValue(self.prenda.getNombre())
         self.detalle_window.texto_talle.SetValue(self.prenda.getTalle())
-        self.detalle_window.texto_costo.SetValue(self.prenda.getCosto())
-        self.detalle_window.texto_precio.SetValue(self.prenda.getPrecio())
+        self.detalle_window.texto_costo.SetValue(str(self.prenda.getCosto()))
+        self.detalle_window.texto_precio.SetValue(str(self.prenda.getPrecio()))
         self.detalle_window.text_descripcion.SetValue(self.prenda.getDescripcion())
 
         if self.prenda.getEstado == 'vendida':
@@ -903,7 +909,7 @@ class DetallePrendaController:
         self.detalle_window.texto_precio.Bind(wx.EVT_TEXT, self.enableGuardar)
         self.detalle_window.texto_talle.Bind(wx.EVT_TEXT, self.enableGuardar)
         self.detalle_window.text_descripcion.Bind(wx.EVT_TEXT, self.enableGuardar)
-        self.detalle_window.combo_box_vendida.Bind(wx.EVT.COMBOBOX, self.enableGuardar)
+        self.detalle_window.combo_box_vendida.Bind(wx.EVT_COMBOBOX, self.enableGuardar)
 
 
     def guardar(self, event):

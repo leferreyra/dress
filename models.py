@@ -273,6 +273,20 @@ class Prenda:
         self._cliente = None 
         self._condicional = False
 
+    def getNombre(self):
+        return self.nombre
+
+    def getTalle(self):
+        return self.talle
+
+    def getCosto(self):
+        return self.costo
+
+    def getPrecio(self):
+        return self.precio
+
+    def getDescripcion(self):
+        return self.descripcion
 
     def setNombre(self, nombre):
 
@@ -448,7 +462,7 @@ class ListaPrendas:
     def addPrenda(self, prenda):
 
         self._prendas.append(prenda)
-        pub.sendMessage("PRENDA_AGREGADA", self)
+        pub.sendMessage("PRENDA_AGREGADA", prenda)
     
 
     def deletePrenda(self, prenda):
@@ -487,7 +501,7 @@ class ListaPrendas:
 
     def findPrendaPorNombre(self, nombre):
 
-        return filter(lambda p:string.find(string.lower(p.nombre), string.lower(nombre)) >= 0, self._prendas)[0]
+        return filter(lambda p:string.find(string.lower(p.nombre), string.lower(nombre)) >= 0, self._prendas)
 
     #este metodo filtra las prendas que se deben mostrar segun la configuracion actual
     def getPrendasActivas(self, configuracion):
@@ -539,6 +553,15 @@ class Carrito:
         self._prendas = []
 
         pub.sendMessage("CARRITO_VACIADO", self)
+
+    def enCarrito(self, prenda):
+        flag = False
+        for p in self._prendas:
+            if p == prenda:
+                flag = True
+                break
+        return flag
+            
 
 class Configuracion:
     """
