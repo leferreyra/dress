@@ -245,7 +245,7 @@ class Cliente:
     def getCompraPorPrenda(self, prenda):
         
         for compra in self._compras:
-            if prenda = compra.prenda:
+            if prenda == compra.prenda:
                 return compra
                 break
 
@@ -343,6 +343,10 @@ class ListaClientes:
     def __init__(self):
 
         self._clientes = []
+    def __len__(self):
+        
+        longitud = len(self._clientes)
+        return longitud
 
 
     def addCliente(self, cliente):
@@ -413,19 +417,19 @@ class ListaClientes:
 
     def getClientesActivos(self, configuracion):
 
-        clientes_activos = ListaClientes()
+        clientes_activos = []
 
         if configuracion.mostrar_morosos:
             for cliente in self.getClientesMorosos():
-                clientes_activos.addCliente(cliente)
+                clientes_activos.append(cliente)
 
         if configuracion.mostrar_tardios:
             for prenda in self.getClientesTardios():
-                clientes_activos.addCliente(cliente)
+                clientes_activos.append(cliente)
        
         if configuracion.mostrar_al_dia:
             for cliente in self.getClientesAlDia():
-                clientes_activos.addCliente(cliente)
+                clientes_activos.append(cliente)
 
         return clientes_activos
 
@@ -463,17 +467,17 @@ class ListaPrendas:
 
     def getPrendasVendidas(self):
 
-        return filter(lambda p:p.vendida, self._prendas)
+        return filter(lambda p:p.getEstado() == 'vendida', self._prendas)
 
 
     def getPrendasDisponibles(self):
 
-        return filter(lambda p:p.getEstado()=='disponible', self._prendas)
+        return filter(lambda p:p.getEstado()== 'disponible', self._prendas)
 
 
     def getPrendasCondicionales(self):
 
-        return filter(lambda p:p.condicional, self._prendas)
+        return filter(lambda p:p.getEstado() == 'condicional', self._prendas)
 
 
     def getPrendaPorCodigo(self, codigo):
@@ -488,19 +492,19 @@ class ListaPrendas:
     #este metodo filtra las prendas que se deben mostrar segun la configuracion actual
     def getPrendasActivas(self, configuracion):
 
-        prendas_activas = ListaPrendas()
+        prendas_activas = []
 
         if configuracion.mostrar_vendidas:
             for prenda in self.getPrendasVendidas():
-                prendas_activas.addPrenda(prenda)
+                prendas_activas.append(prenda)
 
         if configuracion.mostrar_condicionales:
             for prenda in self.getPrendasCondicionales():
-                prendas_activas.addPrenda(prenda)
+                prendas_activas.append(prenda)
        
         if configuracion.mostrar_disponibles:
             for prenda in self.getPrendasDisponibles():
-                prendas_activas.addPrenda(prenda)
+                prendas_activas.append(prenda)
 
         return prendas_activas
 

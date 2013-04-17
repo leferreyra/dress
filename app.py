@@ -82,9 +82,11 @@ class AppController:
 
 
     def agregarPrendaALista(self, item, indx=-1):
+
+        lista_prendas = self.main_window.lista_prendas
         
         # Agregar items a lista_prendas
-        idx = self.main_window.lista_prendas.GetItemCount()
+        idx = lista_prendas.GetItemCount()
         lista_prendas.InsertStringItem(idx, "%s" % item.getCodigo()) 
         lista_prendas.SetStringItem(idx, 1, "%s" % item.getNombre()) 
         lista_prendas.SetStringItem(idx, 2, "%s" % item.getPrecio()) 
@@ -99,25 +101,25 @@ class AppController:
     def agregarClientesActivos(self, clientes=[]):
 
         self.main_window.lista_clientes.DeleteAllItems()
-
-        if len(clientes.getClientes()) > 0:
+        if len(clientes) > 0:
             cl = clientes
         else:
             cl = self.clientes.getClientesActivos(self.configuracion)
 
-        for c in cl.getClientes():
+        for c in cl:
             self.agregarClienteALista(c)
 
 
     def agregarPrendasActivas(self, prendas=[]):
 
+        self.main_window.lista_prendas.DeleteAllItems()
         if len(prendas) > 0:
             pr = prendas
         else:
             pr = self.prendas.getPrendasActivas(self.configuracion)
 
         for p in pr:
-            self.agregarClienteALista(p)
+            self.agregarPrendaALista(p)
 
     def connectEvent(self):
         
@@ -188,12 +190,6 @@ class AppController:
         pub.subscribe(self.prendaEliminadaCarrito, "PRENDA_ELIMINADA_CARRITO")
         pub.subscribe(self.carritoVaciado, "CARRITO_VACIADO")
         
-
-    #metodos de la pestania prendas----------------------------------------------
-
-        pub.subscribe(self.prendaAgregadaCarrito, "PRENDA_AGREGADA_CARRITO")
-        pub.subscribe(self.prendaEliminadaCarrito, "PRENDA_ELIMINADA_CARRITO")
-        pub.subscribe(self.carritoVaciado, "CARRITO_VACIADO")
         
     def mostrarDetallePrenda(self):
 
@@ -316,24 +312,33 @@ class AppController:
     def onKillFocusBuscarClientes(self, event):
         if self.main_window.texto_buscar_clientes.GetValue() == '':
             self.main_window.texto_buscar_clientes.SetValue('Buscar...')
+            #si no hacemos esto solo queda el ultimo buscado
+            self.agregarClientesActivos()
 
     def buscarClientes(self, event):
 
         seleccionado = self.main_window.radio_box_clientes.GetSelection()
-        clientes_activos = self.clientes.getClientesActivos(self.configuracion)
+
+        clientes_activos_lista = self.clientes.getClientesActivos(self.configuracion)
+        clientes_activos = ListaClientes()
+
+        #convierto la lista en una lista clientes para poder buscar
+        for cliente in clientes_activos_lista:
+            clientes_activos.addCliente(cliente)
+
         value = self.main_window.texto_buscar_clientes.GetValue()
-        lista_a_cargar = ListaClientes()
+        lista_a_cargar = []
 
         if seleccionado == 0:
             cliente_buscado = clientes_activos.getClientePorDni(value)
             #como solo devuelve un elemnto lo agrego a la lista
-            lista_a_cargar.addCliente(cliente_buscado)
+            lista_a_cargar.append(cliente_buscado)
 
         elif seleccionado == 1:
             cliente_buscado = clientes_activos.findClientePorNombre(value)
             #como devuelve mas de un elemento los agrego con un for
             for cliente in cliente_buscado:
-                lista_a_cargar.addCliente(cliente)
+                lista_a_cargar.append(cliente)
 
         self.agregarClientesActivos(lista_a_cargar)
 
@@ -643,11 +648,16 @@ class DetalleClienteController:
 
     def guardar(self, event):
 
-        self.cliente.setNombre(self.detalle_window.texto_nombre.GetValue())
-        self.cliente.setTelefono(self.detalle_window.texto_telefono.GetValue())
-        self.cliente.setEmail(self.detalle_window.text_email.GetValue())
-        self.cliente.setFechaNacimiento(self.detalle_window.date_fecha_nacimiento.GetValue())
-        self.cliente.setDireccion(self.detalle_window.texto_direccion.GetValue())
+        if (self.cliente.getNombre() != self.detalle_window.texto_nombre.GetValue()):
+            self.cliente.setNombre(self.detalle_window.texto_nombre.GetValue())
+        if (self.cliente.getTelefono() != self.detalle_window.texto_telefono.GetValue()):
+            self.cliente.setTelefono(self.detalle_window.texto_telefono.GetValue())
+        if (self.cliente.getEmail() != self.detalle_window.text_email.GetValue()):
+            self.cliente.setEmail(self.detalle_window.text_email.GetValue())
+        if (self.cliente.getDireccion() != self.detalle_window.texto_direccion.GetValue()):
+            self.cliente.setDireccion(self.detalle_window.texto_direccion.GetValue())
+        if (self.cliente.getFechaNacimiento() != self.detalle_window.date_fecha_nacimiento.GetValue()):
+            self.cliente.setFechaNacimiento(self.detalle_window.date_fecha_nacimiento.GetValue())
 
         #una vez guardado deshabilitamos el boton guardar
         self.disableGuardar()
@@ -913,7 +923,7 @@ class DetallePrendaController:
         elif vendida == "Si" and self.prenda.getEstado() == "condicional":
                 error_dialog = wx.MessageDialog(self.detalle_window, "Esta prenda esta en condicional, no puede marcarla como vendida", "Advertencia", wx.ICON_INFORMATION)
                 error_dialog.ShowModal()
-        elif vendida == "No" and self.prenda.getEstado() == "vendida"
+        elif vendida == "No" and self.prenda.getEstado() == "vendida":
             cliente = self.prenda.getCliente()
             compra = cliente.getCompraPorPrenda(self.prenda)
             cliente.deleteCompra(compra)
