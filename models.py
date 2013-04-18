@@ -534,17 +534,16 @@ class Carrito:
     def addOrDeletePrenda(self, prenda):
 
         #agrega o quita una prenda al carrito, siempre y cuando este disponible
-        
         if prenda.getEstado() == 'disponible':
-            try:
+            if self.enCarrito(prenda):
                 self._prendas.remove(prenda)
                 pub.sendMessage("PRENDA_ELIMINADA_CARRITO", self)          
-            except:
+            else:
                 self._prendas.append(prenda)
                 pub.sendMessage("PRENDA_AGREGADA_CARRITO", self)  
         else:
             raise NameError('prenda_no_disponible')
-
+    
     def getPrendas(self): 
     
         return self._prendas
