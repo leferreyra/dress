@@ -735,6 +735,14 @@ class NuevoClienteController():
         self.nuevo_window.texto_dni.Bind(wx.EVT_TEXT, self.enableGuardar)
 
     def guardar(self, event):
+
+        try:
+            int(self.nuevo_window.texto_dni.GetValue())
+        except:
+            error_dialog = wx.MessageDialog(self.nuevo_window, "Solo numeros en el DNI", "Error", wx.ICON_INFORMATION)
+            error_dialog.ShowModal()
+            return
+
         dni = self.nuevo_window.texto_dni.GetValue()
         nombre = self.nuevo_window.texto_nombre.GetValue()
         telefono = self.nuevo_window.texto_telefono.GetValue()
@@ -853,8 +861,20 @@ class NuevaPrendaController:
 
         nombre = self.nueva_window.texto_nombre.GetValue()
         talle = self.nueva_window.texto_talle.GetValue()
-        costo = float(self.nueva_window.texto_costo.GetValue())
-        precio = float(self.nueva_window.texto_precio.GetValue())
+        try:
+            costo = float(self.nueva_window.texto_costo.GetValue())
+        except:
+            error_dialog = wx.MessageDialog(self.nueva_window, "Solo numeros en el costo", "Error", wx.ICON_INFORMATION)
+            error_dialog.ShowModal()
+            return
+
+        try:
+            precio = float(self.nueva_window.texto_precio.GetValue())
+        except:
+            error_dialog = wx.MessageDialog(self.nueva_window, "Solo numeros en el precio", "Error", wx.ICON_INFORMATION)
+            error_dialog.ShowModal()
+            return
+        
         descripcion = self.nueva_window.text_descripcion.GetValue()
 
         new_prenda = Prenda(nombre, talle, costo, precio, descripcion)
@@ -910,7 +930,6 @@ class DetallePrendaController:
         self.detalle_window.text_descripcion.SetValue(self.prenda.getDescripcion())
 
         if self.prenda.getEstado() == 'vendida':
-            print "ladero"
 
             self.detalle_window.combo_box_vendida.SetValue('Si')
 
@@ -931,8 +950,21 @@ class DetallePrendaController:
 
         self.prenda.setNombre(self.detalle_window.texto_nombre.GetValue())
         self.prenda.setTalle(self.detalle_window.texto_talle.GetValue())
-        self.prenda.setCosto(float(self.detalle_window.texto_costo.GetValue()))
-        self.prenda.setPrecio(float(self.detalle_window.texto_precio.GetValue()))
+        try:
+            self.prenda.setCosto(float(self.detalle_window.texto_costo.GetValue()))
+        except:
+            error_dialog = wx.MessageDialog(self.detalle_window, "Solo numeros en el costo", "Error", wx.ICON_INFORMATION)
+            error_dialog.ShowModal()
+            return
+
+        try:
+            self.prenda.setPrecio(float(self.detalle_window.texto_precio.GetValue()))
+        except:
+            error_dialog = wx.MessageDialog(self.detalle_window, "Solo numeros en el precio", "Error", wx.ICON_INFORMATION)
+            error_dialog.ShowModal()
+            return
+
+
         self.prenda.setDescripcion(self.detalle_window.text_descripcion.GetValue())
 
         vendida = self.detalle_window.combo_box_vendida.GetValue()
