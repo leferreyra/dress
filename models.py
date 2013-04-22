@@ -245,7 +245,7 @@ class Cliente:
     def getCompraPorPrenda(self, prenda):
         
         for compra in self._compras:
-            if prenda = compra.prenda:
+            if prenda == compra.prenda:
                 return compra
                 break
 

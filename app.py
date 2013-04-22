@@ -913,7 +913,7 @@ class DetallePrendaController:
         elif vendida == "Si" and self.prenda.getEstado() == "condicional":
                 error_dialog = wx.MessageDialog(self.detalle_window, "Esta prenda esta en condicional, no puede marcarla como vendida", "Advertencia", wx.ICON_INFORMATION)
                 error_dialog.ShowModal()
-        elif vendida == "No" and self.prenda.getEstado() == "vendida"
+        elif vendida == "No" and self.prenda.getEstado() == "vendida":
             cliente = self.prenda.getCliente()
             compra = cliente.getCompraPorPrenda(self.prenda)
             cliente.deleteCompra(compra)
@@ -931,6 +931,12 @@ class DetallePrendaController:
 
     def disableGuardar(self):
         self.detalle_window.boton_guardar.Enable(False)            
+
+
+
+class CarritoController:
+
+    pass
 
 
 if __name__=='__main__':
