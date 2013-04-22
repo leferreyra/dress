@@ -273,6 +273,20 @@ class Prenda:
         self._cliente = None 
         self._condicional = False
 
+    def getNombre(self):
+        return self.nombre
+
+    def getTalle(self):
+        return self.talle
+
+    def getCosto(self):
+        return self.costo
+
+    def getPrecio(self):
+        return self.precio
+
+    def getDescripcion(self):
+        return self.descripcion
 
     def setNombre(self, nombre):
 
@@ -343,6 +357,10 @@ class ListaClientes:
     def __init__(self):
 
         self._clientes = []
+    def __len__(self):
+        
+        longitud = len(self._clientes)
+        return longitud
 
 
     def addCliente(self, cliente):
@@ -413,19 +431,19 @@ class ListaClientes:
 
     def getClientesActivos(self, configuracion):
 
-        clientes_activos = ListaClientes()
+        clientes_activos = []
 
         if configuracion.mostrar_morosos:
             for cliente in self.getClientesMorosos():
-                clientes_activos.addCliente(cliente)
+                clientes_activos.append(cliente)
 
         if configuracion.mostrar_tardios:
             for prenda in self.getClientesTardios():
-                clientes_activos.addCliente(cliente)
+                clientes_activos.append(cliente)
        
         if configuracion.mostrar_al_dia:
             for cliente in self.getClientesAlDia():
-                clientes_activos.addCliente(cliente)
+                clientes_activos.append(cliente)
 
         return clientes_activos
 
@@ -444,7 +462,7 @@ class ListaPrendas:
     def addPrenda(self, prenda):
 
         self._prendas.append(prenda)
-        pub.sendMessage("PRENDA_AGREGADA", self)
+        pub.sendMessage("PRENDA_AGREGADA", prenda)
     
 
     def deletePrenda(self, prenda):
@@ -463,17 +481,17 @@ class ListaPrendas:
 
     def getPrendasVendidas(self):
 
-        return filter(lambda p:p.vendida, self._prendas)
+        return filter(lambda p:p.getEstado() == 'vendida', self._prendas)
 
 
     def getPrendasDisponibles(self):
 
-        return filter(lambda p:p.getEstado()=='disponible', self._prendas)
+        return filter(lambda p:p.getEstado()== 'disponible', self._prendas)
 
 
     def getPrendasCondicionales(self):
 
-        return filter(lambda p:p.condicional, self._prendas)
+        return filter(lambda p:p.getEstado() == 'condicional', self._prendas)
 
 
     def getPrendaPorCodigo(self, codigo):
@@ -483,24 +501,24 @@ class ListaPrendas:
 
     def findPrendaPorNombre(self, nombre):
 
-        return filter(lambda p:string.find(string.lower(p.nombre), string.lower(nombre)) >= 0, self._prendas)[0]
+        return filter(lambda p:string.find(string.lower(p.nombre), string.lower(nombre)) >= 0, self._prendas)
 
     #este metodo filtra las prendas que se deben mostrar segun la configuracion actual
     def getPrendasActivas(self, configuracion):
 
-        prendas_activas = ListaPrendas()
+        prendas_activas = []
 
         if configuracion.mostrar_vendidas:
             for prenda in self.getPrendasVendidas():
-                prendas_activas.addPrenda(prenda)
+                prendas_activas.append(prenda)
 
         if configuracion.mostrar_condicionales:
             for prenda in self.getPrendasCondicionales():
-                prendas_activas.addPrenda(prenda)
+                prendas_activas.append(prenda)
        
         if configuracion.mostrar_disponibles:
             for prenda in self.getPrendasDisponibles():
-                prendas_activas.addPrenda(prenda)
+                prendas_activas.append(prenda)
 
         return prendas_activas
 
@@ -516,17 +534,16 @@ class Carrito:
     def addOrDeletePrenda(self, prenda):
 
         #agrega o quita una prenda al carrito, siempre y cuando este disponible
-        
         if prenda.getEstado() == 'disponible':
-            try:
+            if self.enCarrito(prenda):
                 self._prendas.remove(prenda)
                 pub.sendMessage("PRENDA_ELIMINADA_CARRITO", self)          
-            except:
+            else:
                 self._prendas.append(prenda)
                 pub.sendMessage("PRENDA_AGREGADA_CARRITO", self)  
         else:
             raise NameError('prenda_no_disponible')
-
+    
     def getPrendas(self): 
     
         return self._prendas
@@ -535,6 +552,15 @@ class Carrito:
         self._prendas = []
 
         pub.sendMessage("CARRITO_VACIADO", self)
+
+    def enCarrito(self, prenda):
+        flag = False
+        for p in self._prendas:
+            if p == prenda:
+                flag = True
+                break
+        return flag
+            
 
 class Configuracion:
     """

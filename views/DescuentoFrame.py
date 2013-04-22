@@ -12,7 +12,7 @@ import wx
 class FrameDescuento(wx.Frame):
     def __init__(self, *args, **kwds):
         # begin wxGlade: FrameDescuento.__init__
-        kwds["style"] = wx.DEFAULT_FRAME_STYLE
+        kwds["style"] = wx.DEFAULT_FRAME_STYLE ^ wx.RESIZE_BORDER
         wx.Frame.__init__(self, *args, **kwds)
         self.panel_1 = wx.Panel(self, -1)
         self.label_porcentaje = wx.StaticText(self.panel_1, -1, "Porcentaje")

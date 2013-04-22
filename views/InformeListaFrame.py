@@ -11,7 +11,7 @@ import wx
 class InformeListaFrame(wx.Frame):
     def __init__(self, *args, **kwds):
         # begin wxGlade: InformeListaFrame.__init__
-        kwds["style"] = wx.DEFAULT_FRAME_STYLE
+        kwds["style"] = wx.DEFAULT_FRAME_STYLE ^ wx.RESIZE_BORDER
         wx.Frame.__init__(self, *args, **kwds)
         self.panel_2 = wx.Panel(self, -1)
         self.label_titulo = wx.StaticText(self.panel_2, -1, u"TÍTULO")
