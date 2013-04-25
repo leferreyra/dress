@@ -556,6 +556,10 @@ class Carrito:
         pub.sendMessage("CARRITO_VACIADO", self)
 
     def enCarrito(self, prenda):
+
+        # holy shit como flasheaste aca jajja
+        # podias hacer un return prenda in self._prendas nomas.. jajja
+
         flag = False
         for p in self._prendas:
             if p == prenda:

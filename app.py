@@ -13,6 +13,7 @@ from views.DetalleClienteFrame import DetalleClienteFrame
 from views.InformeTextoFrame import InformeTextoFrame
 from views.InformeListaFrame import InformeListaFrame
 from views.PrendaFrame import PrendaFrame
+from views.CarritoFrame import CarritoFrame
 
 class AppController:
     """
@@ -263,7 +264,7 @@ class AppController:
 
     def realizarVenta(self, event):
         if len(self.carrito.getPrendas()) != 0:
-            controlador_venta = Venta_Controller(self.carrito, self.main_window)
+            controlador_venta = CarritoController(self.carrito, self.main_window)
         else:
             error_dialog = wx.MessageDialog(self.main_window, "Seleccione al menos una prenda para vender", "Advertencia", wx.ICON_INFORMATION)
             error_dialog.ShowModal()
@@ -417,6 +418,7 @@ class AppController:
             self.main_window.lista_prendas.SetItemBackgroundColour(seleccionado, "green")    
 
     def prendaEliminadaCarrito(self, message):
+
         self.agregarPrendasActivas()
 
     def carritoVaciado(self, message):
@@ -995,6 +997,7 @@ class DetallePrendaController:
         elif vendida == "Si" and self.prenda.getEstado() == "condicional":
             error_dialog = wx.MessageDialog(self.detalle_window, "Esta prenda esta en condicional, no puede marcarla como vendida", "Advertencia", wx.ICON_INFORMATION)
             error_dialog.ShowModal()
+
         elif vendida == "No" and self.prenda.getEstado() == "vendida":
             cliente = self.prenda.getCliente()
             compra = cliente.getCompraPorPrenda(self.prenda)
@@ -1015,6 +1018,69 @@ class DetallePrendaController:
 
     def disableGuardar(self):
         self.detalle_window.boton_guardar.Enable(False)            
+
+
+
+class CarritoController:
+
+    def __init__(self, carrito, main_window):
+
+        self.carrito = carrito
+        self.main_window = main_window
+        self.window = CarritoFrame(main_window, -1, "Carrito")
+
+        self.tipo_compra = 0 # por default es ocasional
+
+        # Agregar columnas a lista_clientes
+        self.window.list_ctrl_1.InsertColumn(0, "Codigo", width=100)
+        self.window.list_ctrl_1.InsertColumn(1, "Nombre", width=260)
+        self.window.list_ctrl_1.InsertColumn(2, "Precio", width=100)
+
+        # Bind signals
+        pub.subscribe(self.Update, "PRENDA_AGREGADA_CARRITO")
+        pub.subscribe(self.Update, "PRENDA_ELIMINADA_CARRITO")
+        pub.subscribe(self.Update, "CARRITO_VACIADO")
+
+        # Bind events
+        self.window.Bind(wx.EVT_RADIOBOX, self.UpdateTipoCompra, self.window.radio_box_1)
+        self.window.button_1.Bind(wx.EVT_BUTTON, self.OnRemovePrenda)
+
+
+        self.Update()
+        self.window.Show()
+
+    def Update(self, event=None):
+
+        total = 0
+
+        self.window.list_ctrl_1.DeleteAllItems()
+
+        for prenda in self.carrito.getPrendas():
+
+            idx = self.window.list_ctrl_1.GetItemCount()
+            self.window.list_ctrl_1.InsertStringItem(idx, "%d" % prenda.getCodigo())
+            self.window.list_ctrl_1.SetStringItem(idx, 1, "%s" % prenda.getNombre())
+            self.window.list_ctrl_1.SetStringItem(idx, 2, "%s" % prenda.getPrecio())
+
+            total += prenda.getPrecio()
+            self.window.label_6.SetLabel("TOTAL: $%g" % total)
+
+
+    def UpdateTipoCompra(self, event):
+
+        self.window.panel_compra_cliente.Enable(self.window.radio_box_1.GetSelection()==1)
+        self.tipo_compra == self.window.radio_box_1.GetSelection()
+
+
+    def OnRemovePrenda(self, event):
+
+        itemid = self.window.list_ctrl_1.GetFocusedItem()
+
+        if itemid != -1:
+            self.carrito.addOrDeletePrenda(self.carrito.getPrendas()[itemid])
+
+        for prenda in self.carrito.getPrendas():
+            print prenda.nombre
 
 
 if __name__=='__main__':
