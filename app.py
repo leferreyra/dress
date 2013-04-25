@@ -31,6 +31,7 @@ class AppController:
         self.carrito = models.Carrito()
 
         self.main_window = MainFrame(None, -1, "A&M Moda")
+        self.main_window.SetTitle("A&M Moda")
         self.initUi()
         self.connectEvent()
         self.main_window.Show()
@@ -218,7 +219,7 @@ class AppController:
             item = self.main_window.lista_prendas.GetItem(seleccionado,0)
             codigo_prenda = item.GetText()
             prenda = self.prendas.getPrendaPorCodigo(int(codigo_prenda))
-            controlador_detalle_prenda = DetallePrendaController(prenda, self.main_window)
+            controlador_detalle_prenda = DetallePrendaController(prenda, self.carrito, self.main_window)
   
     def eliminarPrenda(self, event):
 
@@ -234,6 +235,10 @@ class AppController:
             except NameError:
                 error_dialog = wx.MessageDialog(self.main_window, "No puede eliminar una prenda vendida o en condicional", "Advertencia", wx.ICON_INFORMATION)
                 error_dialog.ShowModal()
+            
+
+            if self.carrito.enCarrito(prenda):
+                self.carrito.addOrDeletePrenda(prenda)
 
 
 
@@ -413,16 +418,9 @@ class AppController:
             self.main_window.lista_prendas.SetItemBackgroundColour(seleccionado, "green")    
 
     def prendaEliminadaCarrito(self, message):
+        
+        self.agregarPrendasActivas()
 
-        # Hay que arreglar esto, tener en cuenta que la senial PRENDA_ELIMINADA_CARRITO
-        # puede venir de cualquier lado no solo de esta ventana..
-
-        # Cuando elimino una prenda desde el carrito no funciona correctamente, por ejemplo.
-
-        seleccionado = self.main_window.lista_prendas.GetFocusedItem()
-
-        if seleccionado != -1:
-            self.main_window.lista_prendas.SetItemBackgroundColour(seleccionado, "white")
 
     def carritoVaciado(self, message):
         self.agregarPrendasActivas()
@@ -471,7 +469,8 @@ class AppController:
         correos = ''
 
         for cliente in self.clientes.getClientes():
-            correos = correos + cliente.getEmail() + ';'
+            if cliente.getEmail() != '':
+                correos = correos + cliente.getEmail() + ';'
 
         controlador_infome = InformeTextoController('E-mail Clientes', correos, self.main_window)
 
@@ -479,7 +478,8 @@ class AppController:
         correos = ''
 
         for cliente in self.clientes.getClientesMorosos():
-            correos = correos + cliente.getEmail() + ';'
+            if cliente.getEmail() != '':
+                correos = correos + cliente.getEmail() + ';'
 
         controlador_infome = InformeTextoController('E-mail Clientes Morosos', correos, self.main_window)
 
@@ -489,9 +489,10 @@ class AppController:
         telefonos= []
 
         for cliente in self.clientes.getClientes():
-            tupla_datos = (cliente.getDni(), cliente.getNombre(), cliente.getTelefono())
+            if cliente.getTelefono() != '':
+                tupla_datos = (cliente.getDni(), cliente.getNombre(), cliente.getTelefono())
 
-            telefonos.append(tupla_datos)
+                telefonos.append(tupla_datos)
 
         controlador_infome = InformeListaController('Lista de Telefonos', columnas, telefonos, self.main_window)
 
@@ -501,9 +502,10 @@ class AppController:
         telefonos= []
 
         for cliente in self.clientes.getClientesMorosos():
-            tupla_datos = (cliente.getDni(), cliente.getNombre(), cliente.getTelefono())
+            if cliente.getTelefono() != '':
+                tupla_datos = (cliente.getDni(), cliente.getNombre(), cliente.getTelefono())
 
-            telefonos.append(tupla_datos)
+                telefonos.append(tupla_datos)
 
         controlador_infome = InformeListaController('Lista de Telefonos Morosos', columnas, telefonos, self.main_window)      
 
@@ -562,6 +564,7 @@ class DetalleClienteController:
 
         self.cliente = cliente
         self.detalle_window = DetalleClienteFrame(padre, -1, "Detalle Cliente %s" %cliente.getNombre())
+        self.detalle_window.SetTitle("Detalle Cliente %s" %cliente.getNombre())
         self.detalle_window.Centre()
         self.initUi()
         self.connectEvent()
@@ -726,6 +729,7 @@ class NuevoClienteController():
 
         self.clientes = clientes
         self.nuevo_window = NuevoClienteFrame(padre, -1, "Nuevo Cliente")
+        self.nuevo_window.SetTitle("Nuevo Cliente")
         self.nuevo_window.Centre()
 
         self.disableGuardar()
@@ -791,6 +795,7 @@ class InformeTextoController:
         self.titulo = titulo
         self.correos = correos
         self.informe_window = InformeTextoFrame(padre, -1, "Informe")
+        self.informe_window.SetTitle("Informe")
         
         self.informe_window.Centre()
         self.informe_window.text_titulo.SetValue(correos)
@@ -809,6 +814,7 @@ class InformeListaController:
         self.columnas = columnas
         self.telefonos = telefonos
         self.informe_window = InformeListaFrame(padre, -1, "Informe")
+        self.informe_window.SetTitle("Informe")
         self.initUi()
         self.informe_window.Centre()
         
@@ -848,6 +854,7 @@ class NuevaPrendaController:
 
         self.prendas = prendas
         self.nueva_window = PrendaFrame(padre, -1, "Nueva Prenda")
+        self.nueva_window.SetTitle("Nueva Prenda")
         self.nueva_window.Centre()
 
         self.disableGuardar()
@@ -917,15 +924,17 @@ class DetallePrendaController:
     Controlador detalle prenda
     """
 
-    def __init__(self, prenda, padre):
+    def __init__(self, prenda, carrito, padre):
 
         self.prenda = prenda
         self.detalle_window = PrendaFrame(padre, -1, "Detalle Prenda %s" %prenda.getCodigo())
+        self.detalle_window.SetTitle("Detalle Prenda %s" %prenda.getCodigo())
         self.detalle_window.Centre()
         self.initUi()
 
         self.disableGuardar()
         self.connectEvent()
+        self.carrito = carrito
 
         self.detalle_window.Show()
 
@@ -976,7 +985,13 @@ class DetallePrendaController:
 
         vendida = self.detalle_window.combo_box_vendida.GetValue()
 
-        if vendida == "Si" and self.prenda.getEstado() == "disponible":
+        print vendida
+        print self.carrito.enCarrito(self.prenda)
+
+        if vendida == "Si" and self.carrito.enCarrito(self.prenda):
+            error_dialog = wx.MessageDialog(self.detalle_window, "Esta prenda esta en el carrito actualmente, no puede marcarla como vendida", "Advertencia", wx.ICON_INFORMATION)
+            error_dialog.ShowModal()
+        elif vendida == "Si" and self.prenda.getEstado() == "disponible":
             self.prenda.setCliente(cliente_casual)
             new_compra = Compra(self.prenda.getPrecio(), self.prenda, cliente_casual)
             cliente_casual.addCompra(new_compra)
@@ -989,6 +1004,8 @@ class DetallePrendaController:
             compra = cliente.getCompraPorPrenda(self.prenda)
             cliente.deleteCompra(compra)
             self.prenda.setCliente(None)
+
+
 
     def cancelar(self, event):
         pass

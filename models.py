@@ -508,17 +508,19 @@ class ListaPrendas:
 
         prendas_activas = []
 
-        if configuracion.mostrar_vendidas:
-            for prenda in self.getPrendasVendidas():
+        if configuracion.mostrar_disponibles:
+            for prenda in self.getPrendasDisponibles():
                 prendas_activas.append(prenda)
 
         if configuracion.mostrar_condicionales:
             for prenda in self.getPrendasCondicionales():
                 prendas_activas.append(prenda)
-       
-        if configuracion.mostrar_disponibles:
-            for prenda in self.getPrendasDisponibles():
+        
+        if configuracion.mostrar_vendidas:
+            for prenda in self.getPrendasVendidas():
                 prendas_activas.append(prenda)
+
+
 
         return prendas_activas
 
