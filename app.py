@@ -264,7 +264,7 @@ class AppController:
 
     def realizarVenta(self, event):
         if len(self.carrito.getPrendas()) != 0:
-            controlador_venta = CarritoController(self.carrito, self.main_window)
+            controlador_venta = CarritoController(self.carrito, self)
         else:
             error_dialog = wx.MessageDialog(self.main_window, "Seleccione al menos una prenda para vender", "Advertencia", wx.ICON_INFORMATION)
             error_dialog.ShowModal()
@@ -418,7 +418,7 @@ class AppController:
             self.main_window.lista_prendas.SetItemBackgroundColour(seleccionado, "green")    
 
     def prendaEliminadaCarrito(self, message):
-        
+
         self.agregarPrendasActivas()
 
 
@@ -1024,11 +1024,11 @@ class DetallePrendaController:
 
 class CarritoController:
 
-    def __init__(self, carrito, main_window):
+    def __init__(self, carrito, main_controller):
 
         self.carrito = carrito
-        self.main_window = main_window
-        self.window = CarritoFrame(main_window, -1, "Carrito")
+        self.main_controller = main_controller
+        self.window = CarritoFrame(main_controller.main_window, -1, "Carrito")
 
         self.tipo_compra = 0 # por default es ocasional
 
@@ -1043,17 +1043,23 @@ class CarritoController:
         pub.subscribe(self.Update, "CARRITO_VACIADO")
 
         # Bind events
+        self.window.text_ctrl_4.Bind(wx.EVT_TEXT_ENTER, self.buscarClientes)
         self.window.Bind(wx.EVT_RADIOBOX, self.UpdateTipoCompra, self.window.radio_box_1)
         self.window.button_1.Bind(wx.EVT_BUTTON, self.OnRemovePrenda)
+        self.window.button_3.Bind(wx.EVT_BUTTON, self.OnImprimir)
+        self.window.button_4.Bind(wx.EVT_BUTTON, self.OnCancelar)
+        self.window.button_5.Bind(wx.EVT_BUTTON, self.OnAceptar)
 
 
+        self.initUi()
         self.Update()
+        self.agregarClientesActivos()
         self.window.Show()
+
 
     def Update(self, event=None):
 
         total = 0
-
         self.window.list_ctrl_1.DeleteAllItems()
 
         for prenda in self.carrito.getPrendas():
@@ -1064,7 +1070,8 @@ class CarritoController:
             self.window.list_ctrl_1.SetStringItem(idx, 2, "%s" % prenda.getPrecio())
 
             total += prenda.getPrecio()
-            self.window.label_6.SetLabel("TOTAL: $%g" % total)
+
+        self.window.label_6.SetLabel("TOTAL: $%g" % total)
 
 
     def UpdateTipoCompra(self, event):
@@ -1080,8 +1087,108 @@ class CarritoController:
         if itemid != -1:
             self.carrito.addOrDeletePrenda(self.carrito.getPrendas()[itemid])
 
-        for prenda in self.carrito.getPrendas():
-            print prenda.nombre
+
+    def OnCancelar(self, event):
+
+        self.window.Close()
+
+
+    def OnImprimir(self, event):
+
+        # Hay que modificar el modulo print, para que acepte como
+        # parametro un objeto carrito y no una lista de objetos con
+        # atributos ladero
+
+        comprobante = ImpresionComprobante(self.carrito)
+        comprobante.Imprimir()  
+
+
+    def OnAceptar(self, event):
+
+        pass
+
+
+    # Copy & Paste Rulez
+    # ------------------
+
+    def buscarClientes(self, event):
+
+        # Por alguna razon este metodo no es llamado al presionar enter
+        # al parecer el evento no se esta emitiendo 
+
+        seleccionado = self.window.radio_btn_2.GetValue()
+
+        clientes_activos_lista = self.main_controller.clientes.getClientesActivos(self.main_controller.configuracion)
+        clientes_activos = ListaClientes()
+
+        #convierto la lista en una lista clientes para poder buscar
+        for cliente in clientes_activos_lista:
+            clientes_activos.addCliente(cliente)
+
+        value = self.window.text_ctrl_4.GetValue()
+        lista_a_cargar = []
+
+        if seleccionado == 0:
+            try:
+                cliente_buscado = clientes_activos.getClientePorDni(value)
+                #como solo devuelve un elemnto lo agrego a la lista
+                lista_a_cargar.append(cliente_buscado)
+            except:
+                lista_a_cargar = []
+
+        elif seleccionado == 1:
+            cliente_buscado = clientes_activos.findClientePorNombre(value)
+            #como devuelve mas de un elemento los agrego con un for
+            for cliente in cliente_buscado:
+                lista_a_cargar.append(cliente)
+
+        self.agregarClientesBuscados(lista_a_cargar)
+
+
+    def agregarClientesBuscados(self, clientes):
+
+        self.window.list_ctrl_2.DeleteAllItems()
+        
+        cl = clientes
+        for c in cl:
+            self.agregarClienteALista(c)
+
+
+    def agregarClienteALista(self, item, indx=-1):
+
+        lista_clientes = self.window.list_ctrl_2
+
+        # Agregar items a lista_clientes
+        idx = lista_clientes.GetItemCount()
+        lista_clientes.InsertStringItem(idx, "%s" % item.getDni()) 
+        lista_clientes.SetStringItem(idx, 1, "%s" % item.getNombre()) 
+        lista_clientes.SetStringItem(idx, 2, "%s" % item.getSaldo()) 
+
+        if item.getEstado() == 'moroso':
+            lista_clientes.SetItemBAckgroundColour(idx, "red")
+
+        if item.getEstado() == 'tardio':
+            lista_clientes.SetItemBAckgroundColour(idx, "yellow")
+
+
+    def initUi(self):
+
+        lista_clientes = self.window.list_ctrl_2
+
+        # Agregar columnas a lista_clientes
+        lista_clientes.InsertColumn(0, "DNI", width=100)
+        lista_clientes.InsertColumn(1, "Nombre", width=300)
+        lista_clientes.InsertColumn(2, "Saldo")
+
+
+    def agregarClientesActivos(self):
+
+        self.window.list_ctrl_2.DeleteAllItems()
+        
+        cl = self.main_controller.clientes.getClientesActivos(self.main_controller.configuracion)
+        for c in cl:
+            self.agregarClienteALista(c)
+
 
 
 if __name__=='__main__':
