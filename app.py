@@ -213,7 +213,7 @@ class AppController:
         
     def mostrarDetallePrenda(self, event):
 
-        seleccionado = self.main_window.lista_prendas.GetFocusedItem()
+        seleccionado = self.main_window.lista_prendas.GetFirstSelected()
         
         if seleccionado != -1:
             item = self.main_window.lista_prendas.GetItem(seleccionado,0)
@@ -223,7 +223,7 @@ class AppController:
   
     def eliminarPrenda(self, event):
 
-        seleccionado = self.main_window.lista_prendas.GetFocusedItem()
+        seleccionado = self.main_window.lista_prendas.GetFirstSelected()
 
         if seleccionado != -1:
             item = self.main_window.lista_prendas.GetItem(seleccionado,0)
@@ -249,7 +249,7 @@ class AppController:
 
     def agregarQuitarCarrito(self, event):
         
-        seleccionado = self.main_window.lista_prendas.GetFocusedItem()
+        seleccionado = self.main_window.lista_prendas.GetFirstSelected()
 
         if seleccionado != -1:
             item = self.main_window.lista_prendas.GetItem(seleccionado,0)
@@ -264,7 +264,7 @@ class AppController:
 
     def realizarVenta(self, event):
         if len(self.carrito.getPrendas()) != 0:
-            controlador_venta = CarritoController(self.carrito, self)
+            controlador_venta = CarritoController(self.carrito, self.clientes, self.main_window)
         else:
             error_dialog = wx.MessageDialog(self.main_window, "Seleccione al menos una prenda para vender", "Advertencia", wx.ICON_INFORMATION)
             error_dialog.ShowModal()
@@ -315,7 +315,7 @@ class AppController:
 
     def mostrarDetalleCliente(self, event):
 
-        seleccionado = self.main_window.lista_clientes.GetFocusedItem()
+        seleccionado = self.main_window.lista_clientes.GetFirstSelected()
         
         if seleccionado != -1:
             item = self.main_window.lista_clientes.GetItem(seleccionado,0)
@@ -325,7 +325,7 @@ class AppController:
 
     def eliminarCliente(self, event):
 
-        seleccionado = self.main_window.lista_clientes.GetFocusedItem()
+        seleccionado = self.main_window.lista_clientes.GetFirstSelected()
         
         if seleccionado != -1:
             item = self.main_window.lista_clientes.GetItem(seleccionado,0)
@@ -412,7 +412,7 @@ class AppController:
 
     def prendaAgregadaCarrito(self, message):
         
-        seleccionado = self.main_window.lista_prendas.GetFocusedItem()
+        seleccionado = self.main_window.lista_prendas.GetFirstSelected()
 
         if seleccionado != -1:
             self.main_window.lista_prendas.SetItemBackgroundColour(seleccionado, "green")    
@@ -596,11 +596,14 @@ class DetalleClienteController:
 
         #deshabilita inicialmente el boton guardar
         self.disableGuardar()
-
         #setear si el cliente debe o tiene credito
+        self.saldoOcredito()
+
+
+    def saldoOcredito(self):
         if self.cliente.getSaldo() < 0:
-            self.detalle_window.label_saldo.SetValue("Credito")
-            self.detalle_window.label_saldo_imagen.SetValue(self.cliente.getSaldo()*(-1))
+            self.detalle_window.label_saldo.SetLabel("Credito")
+            self.detalle_window.label_saldo_imagen.SetLabel(str(self.cliente.getSaldo()*(-1)))
         else:
             self.detalle_window.label_saldo_imagen.SetLabel(str(self.cliente.getSaldo()))
 
@@ -656,25 +659,36 @@ class DetalleClienteController:
 
     def agregarMovimientos(self):
 
+        self.detalle_window.list_resumen_cliente.DeleteAllItems()
+
         for mov in self.cliente.getMovimientos():
             self.agregarMovimientoALista(mov)
 
     def eliminarAccion(self, event):
         #como los mov no tienen un "id" voy a eliminarlos con la posicon de la tabla
-        seleccionado = self.detalle_window.list_resumen_cliente.GetFocusedItem()
+        seleccionado = self.detalle_window.list_resumen_cliente.GetFirstSelected()
         
         if seleccionado != -1:
-            movimiento = cliente.getMovimientos()[seleccionado]
-            if isinstance(movimiento, 'Compra'):
-                cliente.deleteCompra(movimiento)
-            elif isinstance(movimiento, 'Pago'):
-                cliente.deletePago(movimiento)
-            elif isinstance(movimiento, 'Condicional'):
-                cliente.deleteCondicional(movimiento)
+            movimiento = self.cliente.getMovimientos()[seleccionado]
+            if isinstance(movimiento, Compra):
+                movimiento.prenda.setCliente(None)
+                movimiento.prenda.setCondicional(False)
+                self.cliente.deleteCompra(movimiento)
+            elif isinstance(movimiento, Pago):
+                self.cliente.deletePago(movimiento)
+            elif isinstance(movimiento, Condicional):
+                movimiento.prenda.setCliente(None)
+                movimiento.prenda.setCondicional(False)
+                self.cliente.deleteCondicional(movimiento)
 
     def eliminarCondicionales(self, event):
+        condicionales = self.cliente.getCondicionales()
         
-        cliente.deleteCondicionales()
+        for cond in condicionales:
+            cond.prenda.setCliente(None)
+            cond.prenda.setCondicional(False)
+        
+        self.cliente.deleteCondicionales()
 
     def guardar(self, event):
 
@@ -697,20 +711,22 @@ class DetalleClienteController:
         #hay que destruir el objeto o la ventana
 
     def calcularVuelto(self, event):
+        try:
+            entrega = float(self.detalle_window.texto_entrega.GetValue())
+            paga_con = float(self.detalle_window.texto_paga_con.GetValue())
+        except:
+            error_dialog = wx.MessageDialog(self.detalle_window, "Solo Numeros en Entrega y Paga con", "Advertencia", wx.ICON_INFORMATION)
+            error_dialog.ShowModal()
+            return
 
-        entrega = float(self.detalle_window.texto_entrega.GetValue())
-        paga_con = float(self.detalle_window.texto_paga_con.GetValue())
-        
         if entrega <= paga_con:
             self.detalle_window.label_vuelto_imagen.SetLabel(str(paga_con - entrega))
             new_pago = Pago(entrega, self.cliente)
             self.cliente.addPago(new_pago)
-            self.detalle_window.label_saldo_imagen.SetLabel(str(self.cliente.getSaldo()))
+            self.saldoOcredito()
         else:
             error_dialog = wx.MessageDialog(self.detalle_window, "No puede pagar con menos de lo que entrega", "Advertencia", wx.ICON_INFORMATION)
             error_dialog.ShowModal()
-            error_dialog.Destroy()
-            self.Close()
 
     def accionEliminada(self, message):
         #recargamos movimientos del cliente
@@ -985,9 +1001,6 @@ class DetallePrendaController:
 
         vendida = self.detalle_window.combo_box_vendida.GetValue()
 
-        print vendida
-        print self.carrito.enCarrito(self.prenda)
-
         if vendida == "Si" and self.carrito.enCarrito(self.prenda):
             error_dialog = wx.MessageDialog(self.detalle_window, "Esta prenda esta en el carrito actualmente, no puede marcarla como vendida", "Advertencia", wx.ICON_INFORMATION)
             error_dialog.ShowModal()
@@ -1024,36 +1037,55 @@ class DetallePrendaController:
 
 class CarritoController:
 
-    def __init__(self, carrito, main_controller):
+    def __init__(self, carrito, clientes, main_window):
 
         self.carrito = carrito
-        self.main_controller = main_controller
-        self.window = CarritoFrame(main_controller.main_window, -1, "Carrito")
+        self.clientes = clientes
+        self.window = CarritoFrame(main_window, -1, "Carrito")
+        self.window.Centre()
 
         self.tipo_compra = 0 # por default es ocasional
+        self.condicional = False
 
-        # Agregar columnas a lista_clientes
+        # Agregar columnas a lista_prendas
         self.window.list_ctrl_1.InsertColumn(0, "Codigo", width=100)
         self.window.list_ctrl_1.InsertColumn(1, "Nombre", width=260)
         self.window.list_ctrl_1.InsertColumn(2, "Precio", width=100)
+
+        
+        #Agregar columnas a la lista_Clientes
+
+        self.window.list_ctrl_2.InsertColumn(0, "DNI", width=100)
+        self.window.list_ctrl_2.InsertColumn(1, "Nombre", width=260)
+        self.window.list_ctrl_2.InsertColumn(2, "Saldo", width=100)
 
         # Bind signals
         pub.subscribe(self.Update, "PRENDA_AGREGADA_CARRITO")
         pub.subscribe(self.Update, "PRENDA_ELIMINADA_CARRITO")
         pub.subscribe(self.Update, "CARRITO_VACIADO")
+        pub.subscribe(self.Update, "CAMBIO_PRENDA")
+
+        pub.subscribe(self.updateClientes, "CLIENTE_ELIMINADO")
+        pub.subscribe(self.updateClientes, "CLIENTE_AGREGADO")
 
         # Bind events
         self.window.text_ctrl_4.Bind(wx.EVT_TEXT_ENTER, self.buscarClientes)
         self.window.Bind(wx.EVT_RADIOBOX, self.UpdateTipoCompra, self.window.radio_box_1)
-        self.window.button_1.Bind(wx.EVT_BUTTON, self.OnRemovePrenda)
-        self.window.button_3.Bind(wx.EVT_BUTTON, self.OnImprimir)
-        self.window.button_4.Bind(wx.EVT_BUTTON, self.OnCancelar)
-        self.window.button_5.Bind(wx.EVT_BUTTON, self.OnAceptar)
+        self.window.button_1.Bind(wx.EVT_BUTTON, self.onRealizarDescuento)
+        self.window.button_5.Bind(wx.EVT_BUTTON, self.realizarTransaccion)
+
+        self.window.text_ctrl_4.Bind(wx.EVT_SET_FOCUS, self.onSetFocusBuscarClientes)
+        self.window.text_ctrl_4.Bind(wx.EVT_KILL_FOCUS, self.onKillFocusBuscarClientes)
+        self.window.text_ctrl_4.Bind(wx.EVT_TEXT_ENTER, self.buscarClientes)
+
+        self.window.text_ctrl_2.Bind(wx.EVT_TEXT_ENTER, self.calcularVuelto)
+
+        self.window.checkbox_1.Bind(wx.EVT_CHECKBOX, self.onCondicional)
 
 
-        self.initUi()
         self.Update()
-        self.agregarClientesActivos()
+        self.agregarClientes()
+        self.setEntrega()
         self.window.Show()
 
 
@@ -1077,117 +1109,244 @@ class CarritoController:
     def UpdateTipoCompra(self, event):
 
         self.window.panel_compra_cliente.Enable(self.window.radio_box_1.GetSelection()==1)
+        self.setEntrega()
         self.tipo_compra == self.window.radio_box_1.GetSelection()
+
+
+    def updateClientes(self, message):
+        self.agregarClientes()
+
+    def agregarClientes(self):
+
+        self.window.list_ctrl_2.DeleteAllItems()
+        lista_clientes = self.window.list_ctrl_2
+            
+        for cliente in self.clientes.getClientes():
+
+            idx = lista_clientes.GetItemCount()
+            lista_clientes.InsertStringItem(idx, "%s" % cliente.getDni()) 
+            lista_clientes.SetStringItem(idx, 1, "%s" % cliente.getNombre()) 
+            lista_clientes.SetStringItem(idx, 2, "%s" % cliente.getSaldo())
 
 
     def OnRemovePrenda(self, event):
 
-        itemid = self.window.list_ctrl_1.GetFocusedItem()
+        itemid = self.window.list_ctrl_1.GetFirstSelected()
 
         if itemid != -1:
             self.carrito.addOrDeletePrenda(self.carrito.getPrendas()[itemid])
 
+    
+    def onSetFocusBuscarClientes(self, event):
+        if self.window.text_ctrl_4.GetValue() == 'Buscar...':
+            self.window.text_ctrl_4.Clear()
 
-    def OnCancelar(self, event):
-
-        self.window.Close()
-
-
-    def OnImprimir(self, event):
-
-        # Hay que modificar el modulo print, para que acepte como
-        # parametro un objeto carrito y no una lista de objetos con
-        # atributos ladero
-
-        comprobante = ImpresionComprobante(self.carrito)
-        comprobante.Imprimir()  
-
-
-    def OnAceptar(self, event):
-
-        pass
-
-
-    # Copy & Paste Rulez
-    # ------------------
+    def onKillFocusBuscarClientes(self, event):
+        if self.window.text_ctrl_4.GetValue() == '':
+            self.window.text_ctrl_4.SetValue('Buscar...')
+            #si no hacemos esto solo queda el ultimo buscado
+            self.agregarClientes()
 
     def buscarClientes(self, event):
 
-        # Por alguna razon este metodo no es llamado al presionar enter
-        # al parecer el evento no se esta emitiendo 
+        seleccionado = self.window.radio_box_2.GetSelection()
 
-        seleccionado = self.window.radio_btn_2.GetValue()
-
-        clientes_activos_lista = self.main_controller.clientes.getClientesActivos(self.main_controller.configuracion)
-        clientes_activos = ListaClientes()
+        clientes_lista = self.clientes.getClientes()
+        clientes = ListaClientes()
 
         #convierto la lista en una lista clientes para poder buscar
-        for cliente in clientes_activos_lista:
-            clientes_activos.addCliente(cliente)
+        for cliente in clientes_lista:
+            clientes.addCliente(cliente)
 
         value = self.window.text_ctrl_4.GetValue()
         lista_a_cargar = []
 
         if seleccionado == 0:
             try:
-                cliente_buscado = clientes_activos.getClientePorDni(value)
+                cliente_buscado = clientes.getClientePorDni(value)
                 #como solo devuelve un elemnto lo agrego a la lista
                 lista_a_cargar.append(cliente_buscado)
             except:
                 lista_a_cargar = []
 
         elif seleccionado == 1:
-            cliente_buscado = clientes_activos.findClientePorNombre(value)
+
+            cliente_buscado = clientes.findClientePorNombre(value)
+
             #como devuelve mas de un elemento los agrego con un for
             for cliente in cliente_buscado:
                 lista_a_cargar.append(cliente)
 
         self.agregarClientesBuscados(lista_a_cargar)
 
-
-    def agregarClientesBuscados(self, clientes):
-
-        self.window.list_ctrl_2.DeleteAllItems()
+    def agregarClientesBuscados(self, buscados):
         
-        cl = clientes
-        for c in cl:
-            self.agregarClienteALista(c)
-
-
-    def agregarClienteALista(self, item, indx=-1):
-
-        lista_clientes = self.window.list_ctrl_2
-
-        # Agregar items a lista_clientes
-        idx = lista_clientes.GetItemCount()
-        lista_clientes.InsertStringItem(idx, "%s" % item.getDni()) 
-        lista_clientes.SetStringItem(idx, 1, "%s" % item.getNombre()) 
-        lista_clientes.SetStringItem(idx, 2, "%s" % item.getSaldo()) 
-
-        if item.getEstado() == 'moroso':
-            lista_clientes.SetItemBAckgroundColour(idx, "red")
-
-        if item.getEstado() == 'tardio':
-            lista_clientes.SetItemBAckgroundColour(idx, "yellow")
-
-
-    def initUi(self):
-
-        lista_clientes = self.window.list_ctrl_2
-
-        # Agregar columnas a lista_clientes
-        lista_clientes.InsertColumn(0, "DNI", width=100)
-        lista_clientes.InsertColumn(1, "Nombre", width=300)
-        lista_clientes.InsertColumn(2, "Saldo")
-
-
-    def agregarClientesActivos(self):
-
         self.window.list_ctrl_2.DeleteAllItems()
+        lista_clientes = self.window.list_ctrl_2
+            
+        for cliente in buscados:
+
+            idx = lista_clientes.GetItemCount()
+            lista_clientes.InsertStringItem(idx, "%s" % cliente.getDni()) 
+            lista_clientes.SetStringItem(idx, 1, "%s" % cliente.getNombre()) 
+            lista_clientes.SetStringItem(idx, 2, "%s" % cliente.getSaldo())
+
+    def onCondicional(self, event):
+        self.window.text_ctrl_1.Enable(not(self.window.checkbox_1.IsChecked()))
+        self.window.text_ctrl_2.Enable(not(self.window.checkbox_1.IsChecked()))
+        self.window.text_ctrl_3.Enable(not(self.window.checkbox_1.IsChecked()))
+
+    def calcularVuelto(self, event):
+
+        try:
+            entrega = float(self.window.text_ctrl_1.GetValue())
+            paga_con = float(self.window.text_ctrl_2.GetValue())
+        except:
+            error_dialog = wx.MessageDialog(self.window, "Solo Numeros en Entrega y Paga con", "Advertencia", wx.ICON_INFORMATION)
+            error_dialog.ShowModal()
+            return
         
-        cl = self.main_controller.clientes.getClientesActivos(self.main_controller.configuracion)
-        for c in cl:
-            self.agregarClienteALista(c)
+        if entrega <= paga_con:
+            self.window.text_ctrl_3.SetValue(str(paga_con - entrega))
+        else:
+            error_dialog = wx.MessageDialog(self.window, "No puede pagar con menos de lo que entrega", "Advertencia", wx.ICON_INFORMATION)
+            error_dialog.ShowModal()
+            return
+    
+    def realizarTransaccion(self, event):
+
+        if (self.window.radio_box_1.GetSelection() == 0):
+            self.ventaCasual()
+        if (self.window.radio_box_1.GetSelection() == 1):
+            cond = self.window.checkbox_1.IsChecked()
+            if cond:
+                self.realizarCondicional()
+            else:
+                self.ventaCliente()
+
+    def ventaCasual(self):
+        
+        try:
+            entrega = float(self.window.text_ctrl_1.GetValue())
+            paga_con = float(self.window.text_ctrl_2.GetValue())
+        except:
+            error_dialog = wx.MessageDialog(self.window, "Solo Numeros en Entrega y Paga con", "Advertencia", wx.ICON_INFORMATION)
+            error_dialog.ShowModal()
+            return
+        
+        if entrega <= paga_con:
+            self.window.text_ctrl_3.SetValue(str(paga_con - entrega))
+            new_pago = Pago(entrega, cliente_casual)
+        else:
+            error_dialog = wx.MessageDialog(self.window, "No puede pagar con menos de lo que entrega", "Advertencia", wx.ICON_INFORMATION)
+            error_dialog.ShowModal()
+            return
+
+        for prenda in self.carrito.getPrendas():
+            new_compra = Compra(prenda.getPrecio(), prenda, cliente_casual)
+            cliente_casual.addCompra(new_compra)
+            prenda.setCliente(cliente_casual)
+
+        self.carrito.vaciarCarrito()
+        cliente_casual.addPago(new_pago)
+
+    def ventaCliente(self):
+        
+        try:
+            entrega = float(self.window.text_ctrl_1.GetValue())
+            paga_con = float(self.window.text_ctrl_2.GetValue())
+        except:
+            error_dialog = wx.MessageDialog(self.window, "Solo Numeros en Entrega y Paga con", "Advertencia", wx.ICON_INFORMATION)
+            error_dialog.ShowModal()
+            return
+        
+        if entrega <= paga_con:
+            self.window.text_ctrl_3.SetValue(str(paga_con - entrega))
+        else:
+            error_dialog = wx.MessageDialog(self.window, "No puede pagar con menos de lo que entrega", "Advertencia", wx.ICON_INFORMATION)
+            error_dialog.ShowModal()
+            return
+
+        seleccionado = self.window.list_ctrl_2.GetFirstSelected()
+        
+        if seleccionado == -1:
+            error_dialog = wx.MessageDialog(self.window, "Debe seleccionar un cliente", "Advertencia", wx.ICON_INFORMATION)
+            error_dialog.ShowModal()
+            return
+        else:
+            item = self.window.list_ctrl_2.GetItem(seleccionado,0)
+            dni = item.GetText()
+            cliente = self.clientes.getClientePorDni(dni)
+            
+            for prenda in self.carrito.getPrendas():
+                new_compra = Compra(prenda.getPrecio(), prenda, cliente)
+                cliente.addCompra(new_compra)
+                prenda.setCliente(cliente)
+                prenda.setCondicional(False)
+
+            new_pago = Pago(entrega, cliente)
+            cliente.addPago(new_pago)
+        
+        self.carrito.vaciarCarrito()
+
+    def realizarCondicional(self):
+        seleccionado = self.window.list_ctrl_2.GetFirstSelected()
+        
+        if seleccionado == -1:
+            error_dialog = wx.MessageDialog(self.window, "Debe seleccionar un cliente", "Advertencia", wx.ICON_INFORMATION)
+            error_dialog.ShowModal()
+            return
+        else:
+            item = self.window.list_ctrl_2.GetItem(seleccionado,0)
+            dni = item.GetText()
+            cliente = self.clientes.getClientePorDni(dni)
+            
+            for prenda in self.carrito.getPrendas():
+                new_condicional = Condicional(prenda, cliente)
+                cliente.addCondicional(new_condicional)
+                prenda.setCliente(cliente)
+                prenda.setCondicional(True)
+
+        self.carrito.vaciarCarrito()
+
+    def setEntrega(self):
+        total = 0
+        for prenda in self.carrito.getPrendas():
+            total += prenda.getPrecio()
+
+        if (self.window.radio_box_1.GetSelection() == 0):
+            self.window.text_ctrl_1.SetValue(str(total))
+        elif (self.window.radio_box_1.GetSelection() == 1):
+            self.window.text_ctrl_1.SetValue(str(total*(0.5)))
+
+    def onRealizarDescuento(self, event):
+
+        try:
+            descuento = int(self.window.text_ctrl_5.GetValue())
+        except:
+            error_dialog = wx.MessageDialog(self.window, "Solo numeros enteros del 1 al 100", "Advertencia", wx.ICON_INFORMATION)
+            error_dialog.ShowModal()
+            return
+
+        if (descuento < 0) or (descuento >= 100):
+            error_dialog = wx.MessageDialog(self.window, "Solo numeros enteros del 1 al 100", "Advertencia", wx.ICON_INFORMATION)
+            error_dialog.ShowModal()
+            return
+
+        seleccionado = self.window.list_ctrl_1.GetFirstSelected()
+        
+        if seleccionado != -1:
+            item = self.window.list_ctrl_1.GetItem(seleccionado,0)
+            codigo_prenda = item.GetText()
+            prenda = self.carrito.getPrendaPorCodigo(int(codigo_prenda))
+            nuevo_precio = (prenda.getPrecio() * descuento) / 100
+            nuevo_precio = prenda.getPrecio() - nuevo_precio
+            prenda.setPrecio(nuevo_precio)
+
+        else:
+            error_dialog = wx.MessageDialog(self.window, "Seleccione una prenda", "Advertencia", wx.ICON_INFORMATION)
+            error_dialog.ShowModal()
+            return
 
 
 

@@ -12,7 +12,7 @@ import wx
 class DetalleClienteFrame(wx.Frame):
     def __init__(self, *args, **kwds):
         # begin wxGlade: DetalleClienteFrame.__init__
-        kwds["style"] = wx.DEFAULT_FRAME_STYLE ^ wx.RESIZE_BORDER
+        kwds["style"] = wx.DEFAULT_FRAME_STYLE
         wx.Frame.__init__(self, *args, **kwds)
         self.panel_1 = wx.Panel(self, -1)
         self.label_cliente = wx.StaticText(self.panel_1, -1, "CLIENTE")
@@ -80,6 +80,7 @@ class DetalleClienteFrame(wx.Frame):
         self.list_resumen_cliente.SetFont(wx.Font(11, wx.DEFAULT, wx.NORMAL, wx.NORMAL, 0, ""))
         self.boton_eliminar_accion.SetFont(wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.NORMAL, 0, ""))
         self.boton_eliminar_condicional.SetFont(wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.NORMAL, 0, ""))
+        self.label_saldo.SetMinSize((80, 18))
         self.label_saldo.SetFont(wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.BOLD, 0, ""))
         self.label_saldo_imagen.SetFont(wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.NORMAL, 0, ""))
         self.label_entrega.SetFont(wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.NORMAL, 0, ""))
