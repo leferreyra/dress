@@ -177,7 +177,7 @@ class Cliente:
         for pago in self._pagos:
             credito += pago.monto
 
-        return (deuda - credito)
+        return (credito - deuda)
 
 
     def getUltimoPago(self):
@@ -248,9 +248,6 @@ class Cliente:
             if prenda == compra.prenda:
                 return compra
                 break
-
-    def getCondicionales(self):
-        return self._condicionales
 
 class Prenda:
     """
@@ -351,7 +348,6 @@ class Prenda:
     def getCliente(self):
 
         return self._cliente
-
 
 class ListaClientes:
     """
@@ -570,10 +566,6 @@ class Carrito:
                 flag = True
                 break
         return flag
-
-    def getPrendaPorCodigo(self, codigo):
-
-        return filter(lambda p:p.getCodigo()==codigo, self._prendas)[0]
             
 
 class Configuracion:
@@ -614,8 +606,6 @@ class Configuracion:
     def setMostrarDisponibles(self, estado):
         self.mostrar_disponibles = estado
         pub.sendMessage("CONFIGURACION_PRENDAS_CAMBIO",self)
-
-
 
 
 

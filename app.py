@@ -22,8 +22,11 @@ class AppController:
 
     def __init__(self, app):
 
+        global data
+        data.load() # Cargar los datos del archivo
+
         self.app = app
-        self.data = data.load()
+        self.data = data.objects
 
         self.clientes = self.data["clientes"]
         self.prendas = self.data["prendas"]
@@ -62,6 +65,16 @@ class AppController:
         self.main_window.ver_al_dia.Check(self.configuracion.mostrar_al_dia)
         self.main_window.ver_tardios.Check(self.configuracion.mostrar_tardios)
         self.main_window.ver_morosos.Check(self.configuracion.mostrar_morosos)
+
+
+        # Agregar prendas y clientes a la listas
+
+        for prenda in self.prendas.getPrendas():
+            self.agregarPrendaALista(prenda)
+
+
+        for cliente in self.clientes.getClientes():
+            self.agregarClienteALista(cliente)
 
 
 
@@ -240,6 +253,8 @@ class AppController:
             if self.carrito.enCarrito(prenda):
                 self.carrito.addOrDeletePrenda(prenda)
 
+        data.save()
+
 
 
     def nuevaPrenda(self, event):
@@ -332,6 +347,8 @@ class AppController:
             dni = item.GetText()
             cliente = self.clientes.getClientePorDni(dni)
             self.clientes.deleteCliente(cliente)
+
+        data.save()
     
     def nuevoCliente(self, event):
         #recibe self para poder agregar la prenda a la lista clientes
@@ -435,14 +452,26 @@ class AppController:
         filename = "%s-%s-%s-backup.bak" % (d.day, d.month, d.year)
         file_dialog.SetFilename(filename)
         file_dialog.SetWildcard("Archivos de Backup (*.bak)|*.bak|Todos los archivos (*.*)|*.*")
+
         if file_dialog.ShowModal() == wx.ID_OK:
-                data.backup(file_dialog.GetPath())
+                data.save(file_dialog.GetPath())
                 msgbox = wx.MessageDialog(self.main_window, "Archivo de backup creado satisfactoriamente.", "INFO", style=wx.ICON_INFORMATION)
                 msgbox.ShowModal()
 
     def restaurarBackup(self, event):
-        #leo copia del sgpd vos que entendes tu codigo jaja
-        pass
+
+        # Abrir dialogo para elegir un archivo de backup..
+        file_dialog = wx.FileDialog(self.main_window, style=wx.OPEN)
+        file_dialog.SetWildcard("Archivos de Backup (*.bak)|*.bak|Todos los archivos (*.*)|*.*")
+
+        if file_dialog.ShowModal() == wx.ID_OK:
+
+                data.load(file_dialog.GetPath())
+                data.save()
+                # self.update() Una vez recargados los datos hay que actualizar las listas de la interface.
+                msgbox = wx.MessageDialog(self.main_window, "El archivo de backup se ha cargado satisfactoriamente.", "INFO", style=wx.ICON_INFORMATION)
+                msgbox.ShowModal()
+
     
     def verDisponibles(self, event):
         self.configuracion.setMostrarDisponibles(self.main_window.ver_disponibles.IsChecked())        
@@ -681,6 +710,8 @@ class DetalleClienteController:
                 movimiento.prenda.setCondicional(False)
                 self.cliente.deleteCondicional(movimiento)
 
+            data.save()
+
     def eliminarCondicionales(self, event):
         condicionales = self.cliente.getCondicionales()
         
@@ -690,7 +721,11 @@ class DetalleClienteController:
         
         self.cliente.deleteCondicionales()
 
+        data.save()
+
     def guardar(self, event):
+
+        # Hay que hacer control de tipos
 
         if (self.cliente.getNombre() != self.detalle_window.texto_nombre.GetValue()):
             self.cliente.setNombre(self.detalle_window.texto_nombre.GetValue())
@@ -701,10 +736,13 @@ class DetalleClienteController:
         if (self.cliente.getDireccion() != self.detalle_window.texto_direccion.GetValue()):
             self.cliente.setDireccion(self.detalle_window.texto_direccion.GetValue())
         if (self.cliente.getFechaNacimiento() != self.detalle_window.date_fecha_nacimiento.GetValue()):
-            self.cliente.setFechaNacimiento(self.detalle_window.date_fecha_nacimiento.GetValue())
+            self.cliente.setFechaNacimiento(self.detalle_window.date_fecha_nacimiento.GetValue()) # Hay que crear un objeto date
+
 
         #una vez guardado deshabilitamos el boton guardar
         self.disableGuardar()
+
+        data.save()
 
     def cerrar(self, event):
         self.detalle_window.Destroy()
@@ -738,8 +776,9 @@ class DetalleClienteController:
     def disableGuardar(self):
         self.detalle_window.boton_guardar.Enable(False)
 
-class NuevoClienteController():
 
+
+class NuevoClienteController():
 
     def __init__(self, clientes, padre):
 
@@ -770,16 +809,22 @@ class NuevoClienteController():
             error_dialog.ShowModal()
             return
 
-        dni = self.nuevo_window.texto_dni.GetValue()
-        nombre = self.nuevo_window.texto_nombre.GetValue()
-        telefono = self.nuevo_window.texto_telefono.GetValue()
-        email = self.nuevo_window.text_email.GetValue()
-        fecha_nacimiento = self.nuevo_window.date_fecha_nacimiento.GetValue()
-        direccion = self.nuevo_window.texto_direccion.GetValue()
+
+        # Hay que hacer control de tipos, crear objeto date para la fecha, etc.
+        # Tener en cuenta que GetValue() no devuelve un string de python, sino que
+        # devuelve un objeto wxString que no es lo mismo.
+
+        dni = str(self.nuevo_window.texto_dni.GetValue())
+        nombre = str(self.nuevo_window.texto_nombre.GetValue())
+        telefono = str(self.nuevo_window.texto_telefono.GetValue())
+        email = str(self.nuevo_window.text_email.GetValue())
+        fecha_nacimiento = str(self.nuevo_window.date_fecha_nacimiento.GetValue())
+        direccion = str(self.nuevo_window.texto_direccion.GetValue())
         
         new_cliente = Cliente(dni, nombre, telefono, email, direccion, fecha_nacimiento)
         try:
             self.clientes.addCliente(new_cliente)
+            data.save()
         except NameError:
             error_dialog = wx.MessageDialog(self.nuevo_window, "Ya existe un cliente con ese DNI", "Advertencia", wx.ICON_INFORMATION)
             error_dialog.ShowModal()
@@ -921,6 +966,9 @@ class NuevaPrendaController:
         msgbox = wx.MessageDialog(self.nueva_window, "El codigo de la nueva prenda es %s" %new_prenda.getCodigo(), "Informacion", style=wx.ICON_INFORMATION)
         msgbox.ShowModal()
 
+        data.save()
+
+
     def cancelar(self, event):
         pass
 
@@ -1017,6 +1065,8 @@ class DetallePrendaController:
             compra = cliente.getCompraPorPrenda(self.prenda)
             cliente.deleteCompra(compra)
             self.prenda.setCliente(None)
+
+        data.save()
 
 
 
@@ -1250,6 +1300,8 @@ class CarritoController:
         self.carrito.vaciarCarrito()
         cliente_casual.addPago(new_pago)
 
+        data.save()
+
     def ventaCliente(self):
         
         try:
@@ -1289,6 +1341,8 @@ class CarritoController:
         
         self.carrito.vaciarCarrito()
 
+        data.save()
+
     def realizarCondicional(self):
         seleccionado = self.window.list_ctrl_2.GetFirstSelected()
         
@@ -1308,6 +1362,8 @@ class CarritoController:
                 prenda.setCondicional(True)
 
         self.carrito.vaciarCarrito()
+
+        data.save()
 
     def setEntrega(self):
         total = 0
@@ -1347,6 +1403,8 @@ class CarritoController:
             error_dialog = wx.MessageDialog(self.window, "Seleccione una prenda", "Advertencia", wx.ICON_INFORMATION)
             error_dialog.ShowModal()
             return
+
+        data.save()
 
 
 
