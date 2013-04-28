@@ -152,6 +152,10 @@ class Cliente:
         self._condicionales = []
         pub.sendMessage("CONDICIONALES_ELIMINADOS", self)
 
+    def getCondicionales(self):
+
+        return self._condicionales
+
 
     def getDni(self):
 
@@ -177,7 +181,7 @@ class Cliente:
         for pago in self._pagos:
             credito += pago.monto
 
-        return (credito - deuda)
+        return (deuda - credito)
 
 
     def getUltimoPago(self):
@@ -234,7 +238,7 @@ class Cliente:
 
 
     def cumpleAniosEsteMes(self):
-        nacim = self._fecha_nacimiento.GetMonth() +1
+        nacim = self._fecha_nacimiento.month +1
         actual = datetime.date.today().month
 
         if nacim == actual:

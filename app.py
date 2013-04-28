@@ -7,6 +7,7 @@ from wx.lib.pubsub import Publisher as pub
 import cPickle as pickle
 
 from models import *
+from wxPython.wx import *
 from views.MainFrame import MainFrame
 from views.NuevoClienteFrame import NuevoClienteFrame
 from views.DetalleClienteFrame import DetalleClienteFrame
@@ -69,12 +70,8 @@ class AppController:
 
         # Agregar prendas y clientes a la listas
 
-        for prenda in self.prendas.getPrendas():
-            self.agregarPrendaALista(prenda)
-
-
-        for cliente in self.clientes.getClientes():
-            self.agregarClienteALista(cliente)
+        self.agregarPrendasActivas()
+        self.agregarClientesActivos()
 
 
 
@@ -245,6 +242,7 @@ class AppController:
             
             try:
                 self.prendas.deletePrenda(prenda)
+                data.save()
             except NameError:
                 error_dialog = wx.MessageDialog(self.main_window, "No puede eliminar una prenda vendida o en condicional", "Advertencia", wx.ICON_INFORMATION)
                 error_dialog.ShowModal()
@@ -253,7 +251,7 @@ class AppController:
             if self.carrito.enCarrito(prenda):
                 self.carrito.addOrDeletePrenda(prenda)
 
-        data.save()
+
 
 
 
@@ -429,10 +427,7 @@ class AppController:
 
     def prendaAgregadaCarrito(self, message):
         
-        seleccionado = self.main_window.lista_prendas.GetFirstSelected()
-
-        if seleccionado != -1:
-            self.main_window.lista_prendas.SetItemBackgroundColour(seleccionado, "green")    
+        self.agregarPrendasActivas()   
 
     def prendaEliminadaCarrito(self, message):
 
@@ -474,22 +469,28 @@ class AppController:
 
     
     def verDisponibles(self, event):
-        self.configuracion.setMostrarDisponibles(self.main_window.ver_disponibles.IsChecked())        
+        self.configuracion.setMostrarDisponibles(self.main_window.ver_disponibles.IsChecked())
+        data.save()        
 
     def verCondicionales(self, event):
         self.configuracion.setMostrarCondicionales(self.main_window.ver_condicionales.IsChecked())
+        data.save()
 
     def verVendidas(self, event):
         self.configuracion.setMostrarVendidas(self.main_window.ver_vendidas.IsChecked())
+        data.save()
 
     def verAlDia(self, event):
         self.configuracion.setMostrarAlDia(self.main_window.ver_al_dia.IsChecked())
-
+        data.save()
+    
     def verTardios(self, event):
         self.configuracion.setMostrarTardios(self.main_window.ver_tardios.IsChecked())
-
+        data.save()
+    
     def verMorosos(self, event):
         self.configuracion.setMostrarMorosos(self.main_window.ver_morosos.IsChecked())    
+        data.save()    
     
     def vaciarCarrito(self, event):
         self.carrito.vaciarCarrito()
@@ -581,8 +582,6 @@ class AppController:
 
         controlador = InformeListaController('Informe de Totales', columnas, totales, self.main_window)
 
-        #se debe instanciar la ventana que tiene los totales
-
 
 class DetalleClienteController:
     """
@@ -619,10 +618,16 @@ class DetalleClienteController:
         self.detalle_window.texto_dni.SetLabel(self.cliente.getDni())
         self.detalle_window.texto_nombre.SetValue(self.cliente.getNombre())
         self.detalle_window.texto_direccion.SetValue(self.cliente.getDireccion())
-        self.detalle_window.date_fecha_nacimiento.SetValue(self.cliente.getFechaNacimiento())
         self.detalle_window.texto_telefono.SetValue(self.cliente.getTelefono())
         self.detalle_window.text_email.SetValue(self.cliente.getEmail())
 
+        fecha_nac = self.cliente.getFechaNacimiento()
+        fecha_calendar = wxDateTime()
+        fecha_calendar.SetYear(fecha_nac.year)
+        fecha_calendar.SetMonth(fecha_nac.month)
+        fecha_calendar.SetDay(fecha_nac.day)
+        
+        self.detalle_window.date_fecha_nacimiento.SetValue(fecha_calendar)
         #deshabilita inicialmente el boton guardar
         self.disableGuardar()
         #setear si el cliente debe o tiene credito
@@ -634,6 +639,7 @@ class DetalleClienteController:
             self.detalle_window.label_saldo.SetLabel("Credito")
             self.detalle_window.label_saldo_imagen.SetLabel(str(self.cliente.getSaldo()*(-1)))
         else:
+            self.detalle_window.label_saldo.SetLabel("Saldo")
             self.detalle_window.label_saldo_imagen.SetLabel(str(self.cliente.getSaldo()))
 
 
@@ -727,16 +733,18 @@ class DetalleClienteController:
 
         # Hay que hacer control de tipos
 
-        if (self.cliente.getNombre() != self.detalle_window.texto_nombre.GetValue()):
-            self.cliente.setNombre(self.detalle_window.texto_nombre.GetValue())
-        if (self.cliente.getTelefono() != self.detalle_window.texto_telefono.GetValue()):
-            self.cliente.setTelefono(self.detalle_window.texto_telefono.GetValue())
-        if (self.cliente.getEmail() != self.detalle_window.text_email.GetValue()):
-            self.cliente.setEmail(self.detalle_window.text_email.GetValue())
-        if (self.cliente.getDireccion() != self.detalle_window.texto_direccion.GetValue()):
-            self.cliente.setDireccion(self.detalle_window.texto_direccion.GetValue())
-        if (self.cliente.getFechaNacimiento() != self.detalle_window.date_fecha_nacimiento.GetValue()):
-            self.cliente.setFechaNacimiento(self.detalle_window.date_fecha_nacimiento.GetValue()) # Hay que crear un objeto date
+        if (self.cliente.getNombre() != str(self.detalle_window.texto_nombre.GetValue())):
+            self.cliente.setNombre(str(self.detalle_window.texto_nombre.GetValue()))
+        if (self.cliente.getTelefono() != str(self.detalle_window.texto_telefono.GetValue())):
+            self.cliente.setTelefono(str(self.detalle_window.texto_telefono.GetValue()))
+        if (self.cliente.getEmail() != str(self.detalle_window.text_email.GetValue())):
+            self.cliente.setEmail(str(self.detalle_window.text_email.GetValue()))
+        if (self.cliente.getDireccion() != str(self.detalle_window.texto_direccion.GetValue())):
+            self.cliente.setDireccion(str(self.detalle_window.texto_direccion.GetValue()))
+        if (self.cliente.getFechaNacimiento() != str(self.detalle_window.date_fecha_nacimiento.GetValue())):
+            fecha_wx = self.detalle_window.date_fecha_nacimiento.GetValue() 
+            nueva_fecha = datetime.date(fecha_wx.GetYear(), fecha_wx.GetMonth(), fecha_wx.GetDay())
+            self.cliente.setFechaNacimiento(nueva_fecha) # Hay que crear un objeto date
 
 
         #una vez guardado deshabilitamos el boton guardar
@@ -746,6 +754,7 @@ class DetalleClienteController:
 
     def cerrar(self, event):
         self.detalle_window.Destroy()
+        self.detalle_window.Close()
         #hay que destruir el objeto o la ventana
 
     def calcularVuelto(self, event):
@@ -762,6 +771,8 @@ class DetalleClienteController:
             new_pago = Pago(entrega, self.cliente)
             self.cliente.addPago(new_pago)
             self.saldoOcredito()
+            data.save()
+
         else:
             error_dialog = wx.MessageDialog(self.detalle_window, "No puede pagar con menos de lo que entrega", "Advertencia", wx.ICON_INFORMATION)
             error_dialog.ShowModal()
@@ -769,6 +780,7 @@ class DetalleClienteController:
     def accionEliminada(self, message):
         #recargamos movimientos del cliente
         self.agregarMovimientos()
+        self.saldoOcredito()
 
     def enableGuardar(self, event):
         self.detalle_window.boton_guardar.Enable(True)
@@ -818,9 +830,11 @@ class NuevoClienteController():
         nombre = str(self.nuevo_window.texto_nombre.GetValue())
         telefono = str(self.nuevo_window.texto_telefono.GetValue())
         email = str(self.nuevo_window.text_email.GetValue())
-        fecha_nacimiento = str(self.nuevo_window.date_fecha_nacimiento.GetValue())
+        fecha_wx = self.nuevo_window.date_fecha_nacimiento.GetValue()
         direccion = str(self.nuevo_window.texto_direccion.GetValue())
         
+        fecha_nacimiento = datetime.date(fecha_wx.GetYear(), fecha_wx.GetMonth(), fecha_wx.GetDay())
+
         new_cliente = Cliente(dni, nombre, telefono, email, direccion, fecha_nacimiento)
         try:
             self.clientes.addCliente(new_cliente)
@@ -830,11 +844,12 @@ class NuevoClienteController():
             error_dialog.ShowModal()
 
 
-        #hay que cerrar la ventana o destruir el objeto
+        self.nuevo_window.Destroy()
+        self.nuevo_window.Close()
 
     def cancelar(self, event):
-        #hay que cerrar la ventana o destruir el objeto
-        pass
+        self.nuevo_window.Destroy()
+        self.nuevo_window.Close()
     
 
     def enableGuardar(self, event):
@@ -934,8 +949,8 @@ class NuevaPrendaController:
 
     def guardar(self, event):
 
-        nombre = self.nueva_window.texto_nombre.GetValue()
-        talle = self.nueva_window.texto_talle.GetValue()
+        nombre = str(self.nueva_window.texto_nombre.GetValue())
+        talle = str(self.nueva_window.texto_talle.GetValue())
         try:
             costo = float(self.nueva_window.texto_costo.GetValue())
         except:
@@ -950,7 +965,7 @@ class NuevaPrendaController:
             error_dialog.ShowModal()
             return
         
-        descripcion = self.nueva_window.text_descripcion.GetValue()
+        descripcion = str(self.nueva_window.text_descripcion.GetValue())
 
         new_prenda = Prenda(nombre, talle, costo, precio, descripcion)
 
@@ -970,7 +985,8 @@ class NuevaPrendaController:
 
 
     def cancelar(self, event):
-        pass
+        self.nueva_window.Destroy()
+        self.nueva_window.Close()
 
 
     def enableGuardar(self, event):
@@ -1028,8 +1044,8 @@ class DetallePrendaController:
 
     def guardar(self, event):
 
-        self.prenda.setNombre(self.detalle_window.texto_nombre.GetValue())
-        self.prenda.setTalle(self.detalle_window.texto_talle.GetValue())
+        self.prenda.setNombre(str(self.detalle_window.texto_nombre.GetValue()))
+        self.prenda.setTalle(str(self.detalle_window.texto_talle.GetValue()))
         try:
             self.prenda.setCosto(float(self.detalle_window.texto_costo.GetValue()))
         except:
@@ -1045,7 +1061,7 @@ class DetallePrendaController:
             return
 
 
-        self.prenda.setDescripcion(self.detalle_window.text_descripcion.GetValue())
+        self.prenda.setDescripcion(str(self.detalle_window.text_descripcion.GetValue()))
 
         vendida = self.detalle_window.combo_box_vendida.GetValue()
 
@@ -1067,11 +1083,14 @@ class DetallePrendaController:
             self.prenda.setCliente(None)
 
         data.save()
-
+        
+        self.detalle_window.Destroy()
+        self.detalle_window.Close()
 
 
     def cancelar(self, event):
-        pass
+        self.detalle_window.Destroy()
+        self.detalle_window.Close()
 
 
     def enableGuardar(self, event):
@@ -1177,15 +1196,6 @@ class CarritoController:
             lista_clientes.InsertStringItem(idx, "%s" % cliente.getDni()) 
             lista_clientes.SetStringItem(idx, 1, "%s" % cliente.getNombre()) 
             lista_clientes.SetStringItem(idx, 2, "%s" % cliente.getSaldo())
-
-
-    def OnRemovePrenda(self, event):
-
-        itemid = self.window.list_ctrl_1.GetFirstSelected()
-
-        if itemid != -1:
-            self.carrito.addOrDeletePrenda(self.carrito.getPrendas()[itemid])
-
     
     def onSetFocusBuscarClientes(self, event):
         if self.window.text_ctrl_4.GetValue() == 'Buscar...':
@@ -1274,6 +1284,8 @@ class CarritoController:
             else:
                 self.ventaCliente()
 
+
+
     def ventaCasual(self):
         
         try:
@@ -1301,6 +1313,9 @@ class CarritoController:
         cliente_casual.addPago(new_pago)
 
         data.save()
+
+        self.window.Destroy()
+        self.window.Close()
 
     def ventaCliente(self):
         
@@ -1343,6 +1358,9 @@ class CarritoController:
 
         data.save()
 
+        self.window.Destroy()
+        self.window.Close()
+
     def realizarCondicional(self):
         seleccionado = self.window.list_ctrl_2.GetFirstSelected()
         
@@ -1364,6 +1382,9 @@ class CarritoController:
         self.carrito.vaciarCarrito()
 
         data.save()
+
+        self.window.Destroy()
+        self.window.Close()
 
     def setEntrega(self):
         total = 0
