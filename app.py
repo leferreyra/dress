@@ -1211,19 +1211,12 @@ class CarritoController:
 
         seleccionado = self.window.radio_box_2.GetSelection()
 
-        clientes_lista = self.clientes.getClientes()
-        clientes = ListaClientes()
-
-        #convierto la lista en una lista clientes para poder buscar
-        for cliente in clientes_lista:
-            clientes.addCliente(cliente)
-
         value = self.window.text_ctrl_4.GetValue()
         lista_a_cargar = []
 
         if seleccionado == 0:
             try:
-                cliente_buscado = clientes.getClientePorDni(value)
+                cliente_buscado = self.clientes.getClientePorDni(value)
                 #como solo devuelve un elemnto lo agrego a la lista
                 lista_a_cargar.append(cliente_buscado)
             except:
@@ -1231,7 +1224,7 @@ class CarritoController:
 
         elif seleccionado == 1:
 
-            cliente_buscado = clientes.findClientePorNombre(value)
+            cliente_buscado = self.clientes.findClientePorNombre(value)
 
             #como devuelve mas de un elemento los agrego con un for
             for cliente in cliente_buscado:
