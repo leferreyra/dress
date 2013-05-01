@@ -353,6 +353,11 @@ class Prenda:
 
         return self._cliente
 
+    def aplicarDescuento(self, descuento):
+        nuevo_precio = (self.getPrecio() * descuento) / 100
+        nuevo_precio = self.getPrecio() - nuevo_precio
+        self.setPrecio(nuevo_precio)
+
 class ListaClientes:
     """
     Coleccion de instancias de Cliente
@@ -592,6 +597,12 @@ class Carrito:
 
     def getDescuentos(self):
         return self._descuentos
+
+    def aplicarDescuentos(self):
+        claves = self._descuentos.keys()
+
+        for prenda in claves:
+            prenda.aplicarDescuento(self._descuentos[prenda])
 
             
 

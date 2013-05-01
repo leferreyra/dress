@@ -1323,7 +1323,9 @@ class CarritoController:
             error_dialog = wx.MessageDialog(self.window, "No puede pagar con menos de lo que entrega", "Advertencia", wx.ICON_INFORMATION)
             error_dialog.ShowModal()
             return
-
+        
+        self.carrito.aplicarDescuentos()
+        
         for prenda in self.carrito.getPrendas():
             new_compra = Compra(prenda.getPrecio(), prenda, cliente_casual)
             cliente_casual.addCompra(new_compra)
@@ -1341,7 +1343,12 @@ class CarritoController:
         
         try:
             entrega = float(self.window.text_ctrl_1.GetValue())
+            
+            if entrega == 0:
+                self.window.text_ctrl_2.SetValue('0')
+            
             paga_con = float(self.window.text_ctrl_2.GetValue())
+        
         except:
             error_dialog = wx.MessageDialog(self.window, "Solo Numeros en Entrega y Paga con", "Advertencia", wx.ICON_INFORMATION)
             error_dialog.ShowModal()
@@ -1364,15 +1371,18 @@ class CarritoController:
             item = self.window.list_ctrl_2.GetItem(seleccionado,0)
             dni = item.GetText()
             cliente = self.clientes.getClientePorDni(dni)
-            
+         
+            self.carrito.aplicarDescuentos()
+
             for prenda in self.carrito.getPrendas():
                 new_compra = Compra(prenda.getPrecio(), prenda, cliente)
                 cliente.addCompra(new_compra)
                 prenda.setCliente(cliente)
                 prenda.setCondicional(False)
 
-            new_pago = Pago(entrega, cliente)
-            cliente.addPago(new_pago)
+            if entrega > 0:
+                new_pago = Pago(entrega, cliente)
+                cliente.addPago(new_pago)
         
         self.carrito.vaciarCarrito()
 
