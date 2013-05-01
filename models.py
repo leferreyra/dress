@@ -544,6 +544,10 @@ class Carrito:
         if prenda.getEstado() == 'disponible':
             if self.enCarrito(prenda):
                 self._prendas.remove(prenda)
+                
+                if self._descuentos.has_key(prenda):
+                    del self._descuentos[prenda]
+                
                 pub.sendMessage("PRENDA_ELIMINADA_CARRITO", self)          
             else:
                 self._prendas.append(prenda)
@@ -557,8 +561,10 @@ class Carrito:
 
     def vaciarCarrito(self):
         self._prendas = []
+        self._descuentos = {}
 
         pub.sendMessage("CARRITO_VACIADO", self)
+    
     def getPrendaPorCodigo(self, codigo):
         return filter(lambda p:p.getCodigo()==codigo, self._prendas)[0]
 

@@ -1160,6 +1160,7 @@ class CarritoController:
         self.window.Bind(wx.EVT_RADIOBOX, self.UpdateTipoCompra, self.window.radio_box_1)
         self.window.button_1.Bind(wx.EVT_BUTTON, self.onRealizarDescuento)
         self.window.button_5.Bind(wx.EVT_BUTTON, self.realizarTransaccion)
+        self.window.button_4.Bind(wx.EVT_BUTTON, self.onCancelar)
 
         self.window.text_ctrl_4.Bind(wx.EVT_SET_FOCUS, self.onSetFocusBuscarClientes)
         self.window.text_ctrl_4.Bind(wx.EVT_KILL_FOCUS, self.onKillFocusBuscarClientes)
@@ -1193,7 +1194,7 @@ class CarritoController:
                 nuevo_precio = prenda.getPrecio() - nuevo_precio
                 self.window.list_ctrl_1.SetStringItem(idx, 2, "%s" % nuevo_precio)
                 total += nuevo_precio
-            else
+            else:
                 self.window.list_ctrl_1.SetStringItem(idx, 2, "%s" % prenda.getPrecio())
                 total += prenda.getPrecio()
             
@@ -1447,6 +1448,10 @@ class CarritoController:
             return
 
         data.save()
+
+    def onCancelar(self, event):
+        self.window.Destroy()
+        self.window.Close()
 
 
 
