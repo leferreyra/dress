@@ -36,9 +36,11 @@ class AppController:
 
         self.main_window = MainFrame(None, -1, "A&M Moda")
         self.main_window.SetTitle("A&M Moda")
+
         self.initUi()
         self.connectEvent()
         self.main_window.Show()
+        self.main_window.Maximize()
 
     def initUi(self):
 
@@ -622,10 +624,7 @@ class DetalleClienteController:
         self.detalle_window.text_email.SetValue(self.cliente.getEmail())
 
         fecha_nac = self.cliente.getFechaNacimiento()
-        fecha_calendar = wxDateTime()
-        fecha_calendar.SetYear(fecha_nac.year)
-        fecha_calendar.SetMonth(fecha_nac.month)
-        fecha_calendar.SetDay(fecha_nac.day)
+        fecha_calendar = wxDateTimeFromDMY(fecha_nac.day, fecha_nac.month, fecha_nac.year)
         
         self.detalle_window.date_fecha_nacimiento.SetValue(fecha_calendar)
         #deshabilita inicialmente el boton guardar

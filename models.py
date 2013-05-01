@@ -558,6 +558,9 @@ class Carrito:
         self._prendas = []
 
         pub.sendMessage("CARRITO_VACIADO", self)
+    def getPrendaPorCodigo(self, codigo):
+        return filter(lambda p:p.getCodigo()==codigo, self._prendas)[0]
+
 
     def enCarrito(self, prenda):
 
