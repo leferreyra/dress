@@ -15,6 +15,7 @@ from views.InformeTextoFrame import InformeTextoFrame
 from views.InformeListaFrame import InformeListaFrame
 from views.PrendaFrame import PrendaFrame
 from views.CarritoFrame import CarritoFrame
+from printer import ImpresionComprobante
 
 
 data.load() # Cargar los datos del archivo
@@ -1295,6 +1296,9 @@ class CarritoController:
     
     def realizarTransaccion(self, event):
 
+        comprobante = ImpresionComprobante(self.carrito)
+        comprobante.Imprimir()
+
         if (self.window.radio_box_1.GetSelection() == 0):
             self.ventaCasual()
         if (self.window.radio_box_1.GetSelection() == 1):
@@ -1303,6 +1307,8 @@ class CarritoController:
                 self.realizarCondicional()
             else:
                 self.ventaCliente()
+
+
 
 
 
