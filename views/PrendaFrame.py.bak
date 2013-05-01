@@ -8,42 +8,37 @@ import wx
 # end wxGlade
 
 
-class FramePrincipal(wx.Frame):
+
+class PrendaFrame(wx.Frame):
     def __init__(self, *args, **kwds):
-        # begin wxGlade: FramePrincipal.__init__
-        kwds["style"] = wx.DEFAULT_FRAME_STYLE
+        # begin wxGlade: PrendaFrame.__init__
+        kwds["style"] = wx.DEFAULT_FRAME_STYLE ^ wx.RESIZE_BORDER
         wx.Frame.__init__(self, *args, **kwds)
         self.panel_1 = wx.Panel(self, -1)
         self.label_prenda = wx.StaticText(self.panel_1, -1, "PRENDA")
-        self.label_codigo = wx.StaticText(self.panel_1, -1, u"Código", style=wx.ALIGN_RIGHT)
-        self.texto_codigo = TextoCodigo(self.panel_1, -1, "")
         self.label_nombre = wx.StaticText(self.panel_1, -1, "Nombre", style=wx.ALIGN_RIGHT)
-        self.texto_nombre = TextoNombre(self.panel_1, -1, "")
+        self.texto_nombre = wx.TextCtrl(self.panel_1, -1, "")
         self.label_talle = wx.StaticText(self.panel_1, -1, "Talle", style=wx.ALIGN_CENTRE)
-        self.texto_talle = TextoTalle(self.panel_1, -1, "")
+        self.texto_talle = wx.TextCtrl(self.panel_1, -1, "")
         self.label_costo = wx.StaticText(self.panel_1, -1, "Costo", style=wx.ALIGN_RIGHT)
-        self.texto_costo = TextoCosto(self.panel_1, -1, "")
+        self.texto_costo = wx.TextCtrl(self.panel_1, -1, "")
         self.label_precio = wx.StaticText(self.panel_1, -1, "Precio", style=wx.ALIGN_RIGHT)
-        self.texto_precio = TextoPrecio(self.panel_1, -1, "")
+        self.texto_precio = wx.TextCtrl(self.panel_1, -1, "")
         self.label_descripcion = wx.StaticText(self.panel_1, -1, u"Descripción")
-        self.text_descripcion = TextoDescripcion(self.panel_1, -1, "", style=wx.TE_MULTILINE)
+        self.text_descripcion = wx.TextCtrl(self.panel_1, -1, "", style=wx.TE_MULTILINE)
         self.label_vendida = wx.StaticText(self.panel_1, -1, "Vendida", style=wx.ALIGN_RIGHT)
-        self.combo_box_vendida = ComboVendido(self.panel_1, -1, choices=[u"Sí", "No"], style=wx.CB_DROPDOWN | wx.CB_READONLY)
+        self.combo_box_vendida = wx.ComboBox(self.panel_1, -1, choices=["No", "Si"], style=wx.CB_DROPDOWN | wx.CB_READONLY)
+        self.boton_cancelar = wx.Button(self.panel_1, -1, "Cancelar")
         self.boton_guardar = wx.Button(self.panel_1, -1, "Guardar")
-        self.boton_cerrar = wx.Button(self.panel_1, -1, "Cerrar")
 
         self.__set_properties()
         self.__do_layout()
         # end wxGlade
 
     def __set_properties(self):
-        # begin wxGlade: FramePrincipal.__set_properties
+        # begin wxGlade: PrendaFrame.__set_properties
         self.SetTitle("frame_1")
         self.label_prenda.SetFont(wx.Font(25, wx.DEFAULT, wx.NORMAL, wx.NORMAL, 0, "Ubuntu"))
-        self.label_codigo.SetMinSize((56, 18))
-        self.label_codigo.SetFont(wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.NORMAL, 0, "Ubuntu"))
-        self.texto_codigo.SetMinSize((80, 26))
-        self.texto_codigo.SetFont(wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.NORMAL, 0, "MS Shell Dlg 2"))
         self.label_nombre.SetMinSize((56, 18))
         self.label_nombre.SetFont(wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.NORMAL, 0, "Ubuntu"))
         self.texto_nombre.SetMinSize((320, 26))
@@ -69,7 +64,7 @@ class FramePrincipal(wx.Frame):
         # end wxGlade
 
     def __do_layout(self):
-        # begin wxGlade: FramePrincipal.__do_layout
+        # begin wxGlade: PrendaFrame.__do_layout
         sizer_1 = wx.BoxSizer(wx.VERTICAL)
         sizer_2 = wx.BoxSizer(wx.VERTICAL)
         sizer_8 = wx.BoxSizer(wx.HORIZONTAL)
@@ -79,11 +74,7 @@ class FramePrincipal(wx.Frame):
         sizer_5_copy = wx.BoxSizer(wx.HORIZONTAL)
         sizer_5 = wx.BoxSizer(wx.HORIZONTAL)
         sizer_4 = wx.BoxSizer(wx.HORIZONTAL)
-        sizer_3 = wx.BoxSizer(wx.HORIZONTAL)
         sizer_2.Add(self.label_prenda, 0, wx.LEFT | wx.TOP, 10)
-        sizer_3.Add(self.label_codigo, 0, wx.LEFT | wx.TOP, 10)
-        sizer_3.Add(self.texto_codigo, 0, wx.LEFT | wx.TOP, 7)
-        sizer_2.Add(sizer_3, 1, wx.EXPAND, 0)
         sizer_4.Add(self.label_nombre, 0, wx.LEFT | wx.TOP, 10)
         sizer_4.Add(self.texto_nombre, 0, wx.LEFT | wx.TOP, 6)
         sizer_2.Add(sizer_4, 1, wx.EXPAND, 0)
@@ -102,8 +93,8 @@ class FramePrincipal(wx.Frame):
         sizer_7.Add(self.label_vendida, 0, wx.LEFT | wx.TOP, 10)
         sizer_7.Add(self.combo_box_vendida, 0, wx.LEFT | wx.TOP, 6)
         sizer_2.Add(sizer_7, 1, wx.EXPAND, 0)
+        sizer_8.Add(self.boton_cancelar, 0, 0, 0)
         sizer_8.Add(self.boton_guardar, 0, 0, 0)
-        sizer_8.Add(self.boton_cerrar, 0, 0, 0)
         sizer_2.Add(sizer_8, 1, wx.RIGHT | wx.BOTTOM | wx.ALIGN_RIGHT, 8)
         self.panel_1.SetSizer(sizer_2)
         sizer_1.Add(self.panel_1, 1, wx.LEFT | wx.TOP, 0)
@@ -111,6 +102,20 @@ class FramePrincipal(wx.Frame):
         sizer_1.Fit(self)
         self.Layout()
         # end wxGlade
+
+# end of class PrendaFrame
+class FramePrincipal(wx.Frame):
+    def __init__(self, *args, **kwds):
+        # content of this block not found: did you rename this class?
+        pass
+
+    def __set_properties(self):
+        # content of this block not found: did you rename this class?
+        pass
+
+    def __do_layout(self):
+        # content of this block not found: did you rename this class?
+        pass
 
 # end of class FramePrincipal
 if __name__ == "__main__":

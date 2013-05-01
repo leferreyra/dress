@@ -12,7 +12,7 @@ import wx
 class PrendaFrame(wx.Frame):
     def __init__(self, *args, **kwds):
         # begin wxGlade: PrendaFrame.__init__
-        kwds["style"] = wx.DEFAULT_FRAME_STYLE ^ wx.RESIZE_BORDER
+        kwds["style"] = wx.DEFAULT_FRAME_STYLE
         wx.Frame.__init__(self, *args, **kwds)
         self.panel_1 = wx.Panel(self, -1)
         self.label_prenda = wx.StaticText(self.panel_1, -1, "PRENDA")
@@ -47,13 +47,14 @@ class PrendaFrame(wx.Frame):
         self.label_talle.SetFont(wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.NORMAL, 0, "Ubuntu"))
         self.texto_talle.SetMinSize((40, 26))
         self.texto_talle.SetFont(wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.NORMAL, 0, "MS Shell Dlg 2"))
-        self.label_costo.SetMinSize((56, 18))
+        self.label_costo.SetMinSize((42, 18))
         self.label_costo.SetFont(wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.NORMAL, 0, "Ubuntu"))
-        self.texto_costo.SetMinSize((40, 26))
+        self.texto_costo.SetMinSize((80, 26))
         self.texto_costo.SetFont(wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.NORMAL, 0, "MS Shell Dlg 2"))
         self.label_precio.SetMinSize((46, 18))
         self.label_precio.SetFont(wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.NORMAL, 0, "Ubuntu"))
-        self.texto_precio.SetMinSize((40, 26))
+        self.texto_precio.SetMinSize((80, 26))
+        self.texto_precio.SetFont(wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.NORMAL, 0, "MS Shell Dlg 2"))
         self.label_descripcion.SetFont(wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.NORMAL, 0, "Ubuntu"))
         self.text_descripcion.SetMinSize((400, 78))
         self.label_vendida.SetMinSize((59, 18))
