@@ -16,6 +16,12 @@ from views.InformeListaFrame import InformeListaFrame
 from views.PrendaFrame import PrendaFrame
 from views.CarritoFrame import CarritoFrame
 
+
+data.load() # Cargar los datos del archivo
+
+# Setear NEW_PRENDA_ID
+Prenda._index = data.objects['NEW_PRENDA_ID']
+
 class AppController:
     """
     Controlador principal de la app.
@@ -24,7 +30,6 @@ class AppController:
     def __init__(self, app):
 
         global data
-        data.load() # Cargar los datos del archivo
 
         self.app = app
         self.data = data.objects
@@ -981,7 +986,11 @@ class NuevaPrendaController:
         msgbox = wx.MessageDialog(self.nueva_window, "El codigo de la nueva prenda es %s" %new_prenda.getCodigo(), "Informacion", style=wx.ICON_INFORMATION)
         msgbox.ShowModal()
 
+        # Guardar nueva ID base para prenda
+
+        data.objects['NEW_PRENDA_ID'] = Prenda._index
         data.save()
+
 
 
     def cancelar(self, event):
