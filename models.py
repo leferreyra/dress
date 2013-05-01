@@ -536,6 +536,7 @@ class Carrito:
     def __init__(self):
 
         self._prendas = []
+        self._descuentos = {}
 
     def addOrDeletePrenda(self, prenda):
 
@@ -573,6 +574,19 @@ class Carrito:
                 flag = True
                 break
         return flag
+
+    def agregarDescuento(self, prenda, descuento):
+        
+        if self._descuentos.has_key(prenda):
+            self._descuentos[prenda] = self._descuentos[prenda] + descuento
+        else:   
+            self._descuentos[prenda] = descuento
+    
+        pub.sendMessage("DESCUENTO_AGREGADO")
+
+    def getDescuentos(self):
+        return self._descuentos
+
             
 
 class Configuracion:

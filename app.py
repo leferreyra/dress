@@ -58,6 +58,9 @@ class AppController:
         lista_clientes.InsertColumn(3, "Saldo")# lista_clientes 
 
 
+        #setear color correcto a notebook
+        self.main_window.notebook_1_pane_1.SetBackgroundColour(self.main_window.panel_1.GetBackgroundColour())
+        self.main_window.notebook_1_pane_2.SetBackgroundColour(self.main_window.panel_1.GetBackgroundColour())
         # lista_prendas
         lista_prendas= self.main_window.lista_prendas
 
@@ -94,10 +97,10 @@ class AppController:
         lista_clientes.SetStringItem(idx, 3, "%s" % item.getSaldo()) 
 
         if item.getEstado() == 'moroso':
-            lista_clientes.SetItemBAckgroundColour(idx, "red")
+            lista_clientes.SetItemBackgroundColour(idx, "red")
 
         if item.getEstado() == 'tardio':
-            lista_clientes.SetItemBAckgroundColour(idx, "yellow")
+            lista_clientes.SetItemBackgroundColour(idx, "yellow")
 
 
     def agregarPrendaALista(self, item, indx=-1):
@@ -474,6 +477,12 @@ class AppController:
                 msgbox = wx.MessageDialog(self.main_window, "El archivo de backup se ha cargado satisfactoriamente.", "INFO", style=wx.ICON_INFORMATION)
                 msgbox.ShowModal()
 
+                self.data = data.objects
+                self.clientes = self.data["clientes"]
+                self.prendas = self.data["prendas"]
+                self.configuracion = self.data["configuracion"]
+                self.agregarClientesActivos()
+                self.agregarPrendasActivas()
     
     def verDisponibles(self, event):
         self.configuracion.setMostrarDisponibles(self.main_window.ver_disponibles.IsChecked())
@@ -1141,6 +1150,7 @@ class CarritoController:
         pub.subscribe(self.Update, "PRENDA_ELIMINADA_CARRITO")
         pub.subscribe(self.Update, "CARRITO_VACIADO")
         pub.subscribe(self.Update, "CAMBIO_PRENDA")
+        pub.subscribe(self.Update, "DESCUENTO_AGREGADO")
 
         pub.subscribe(self.updateClientes, "CLIENTE_ELIMINADO")
         pub.subscribe(self.updateClientes, "CLIENTE_AGREGADO")
@@ -1176,9 +1186,17 @@ class CarritoController:
             idx = self.window.list_ctrl_1.GetItemCount()
             self.window.list_ctrl_1.InsertStringItem(idx, "%d" % prenda.getCodigo())
             self.window.list_ctrl_1.SetStringItem(idx, 1, "%s" % prenda.getNombre())
-            self.window.list_ctrl_1.SetStringItem(idx, 2, "%s" % prenda.getPrecio())
 
-            total += prenda.getPrecio()
+            if self.carrito.getDescuentos().has_key(prenda):
+                descuento = self.carrito.getDescuentos()[prenda]
+                nuevo_precio = (prenda.getPrecio() * descuento) / 100
+                nuevo_precio = prenda.getPrecio() - nuevo_precio
+                self.window.list_ctrl_1.SetStringItem(idx, 2, "%s" % nuevo_precio)
+                total += nuevo_precio
+            else
+                self.window.list_ctrl_1.SetStringItem(idx, 2, "%s" % prenda.getPrecio())
+                total += prenda.getPrecio()
+            
 
         self.window.label_6.SetLabel("TOTAL: $%g" % total)
 
@@ -1417,9 +1435,11 @@ class CarritoController:
             item = self.window.list_ctrl_1.GetItem(seleccionado,0)
             codigo_prenda = item.GetText()
             prenda = self.carrito.getPrendaPorCodigo(int(codigo_prenda))
-            nuevo_precio = (prenda.getPrecio() * descuento) / 100
-            nuevo_precio = prenda.getPrecio() - nuevo_precio
-            prenda.setPrecio(nuevo_precio)
+            
+            self.carrito.agregarDescuento(prenda, descuento)
+
+
+            #prenda.setPrecio(nuevo_precio)
 
         else:
             error_dialog = wx.MessageDialog(self.window, "Seleccione una prenda", "Advertencia", wx.ICON_INFORMATION)
