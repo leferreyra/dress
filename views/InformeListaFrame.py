@@ -25,9 +25,7 @@ class InformeListaFrame(wx.Frame):
     def __set_properties(self):
         # begin wxGlade: InformeListaFrame.__set_properties
         self.SetTitle("frame_2")
-        self.SetSize((500, 400))
         self.label_titulo.SetFont(wx.Font(25, wx.DEFAULT, wx.NORMAL, wx.NORMAL, 0, ""))
-        self.list_titulo.SetMinSize((500, 350))
         self.list_titulo.SetFont(wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.NORMAL, 0, "MS Shell Dlg 2"))
         # end wxGlade
 
@@ -36,13 +34,14 @@ class InformeListaFrame(wx.Frame):
         grid_sizer_1 = wx.FlexGridSizer(2, 1, 0, 0)
         sizer_2 = wx.BoxSizer(wx.VERTICAL)
         sizer_1 = wx.BoxSizer(wx.VERTICAL)
-        sizer_1.Add(self.label_titulo, 0, wx.LEFT | wx.TOP, 7)
+        sizer_1.Add(self.label_titulo, 0, wx.LEFT | wx.RIGHT | wx.TOP | wx.EXPAND, 7)
         self.panel_1.SetSizer(sizer_1)
         grid_sizer_1.Add(self.panel_1, 1, wx.EXPAND, 0)
         sizer_2.Add(self.list_titulo, 1, wx.ALL | wx.EXPAND, 10)
         self.panel_2.SetSizer(sizer_2)
         grid_sizer_1.Add(self.panel_2, 1, wx.EXPAND, 0)
         self.SetSizer(grid_sizer_1)
+        grid_sizer_1.Fit(self)
         self.Layout()
         # end wxGlade
 
