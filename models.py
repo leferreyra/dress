@@ -133,7 +133,6 @@ class Cliente:
             monto = self._compras[x].monto
 
             if (compra.fecha == fecha) and (compra.cliente == cliente) and (compra.prenda == prenda) and (compra.monto == monto):
-                print "al fin"
                 del (self._compras[x])
                 pub.sendMessage("COMPRA_ELIMINADA", self)
                 break
@@ -141,8 +140,15 @@ class Cliente:
     
     def deletePago(self, pago):
 
-        self._pagos.remove(pago)
-        pub.sendMessage("PAGO_ELIMINADO", self)
+        for x in range(0, len (self._pagos)):
+            fecha = self._pagos[x].fecha
+            cliente = self._pagos[x].cliente
+            monto = self._pagos[x].monto
+
+            if (pago.fecha == fecha) and (pago.cliente == cliente) and (pago.monto == monto):
+                del (self._pagos[x])
+                pub.sendMessage("PAGO_ELIMINADO", self)
+                break
 
 
     def addCondicional(self, condicional):
@@ -152,8 +158,15 @@ class Cliente:
 
     def deleteCondicional(self, condicional):
 
-        self._condicionales.remove(condicional)
-        pub.sendMessage("CONDICIONALES_ELIMINADOS")
+        for x in range(0, len (self._condicionales)):
+            fecha = self._condicionales[x].fecha
+            cliente = self._condicionales[x].cliente
+            prenda = self._condicionales[x].prenda
+
+            if (condicional.fecha == fecha) and (condicional.cliente == cliente) and (condicional.prenda == prenda):
+                del (self._condicionales[x])
+                pub.sendMessage("CONDICIONALES_ELIMINADOS")
+                break
         
     def deleteCondicionales(self):
 
