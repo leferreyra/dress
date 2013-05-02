@@ -126,9 +126,17 @@ class Cliente:
 
 
     def deleteCompra(self, compra):
+        for x in range(0, len (self._compras)):
+            fecha = self._compras[x].fecha
+            cliente = self._compras[x].cliente
+            prenda = self._compras[x].prenda
+            monto = self._compras[x].monto
 
-        self._compras.remove(compra)
-        pub.sendMessage("COMPRA_ELIMINADA", self)
+            if (compra.fecha == fecha) and (compra.cliente == cliente) and (compra.prenda == prenda) and (compra.monto == monto):
+                print "al fin"
+                del (self._compras[x])
+                pub.sendMessage("COMPRA_ELIMINADA", self)
+                break
 
     
     def deletePago(self, pago):

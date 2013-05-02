@@ -484,6 +484,7 @@ class AppController:
                 self.configuracion = self.data["configuracion"]
                 self.agregarClientesActivos()
                 self.agregarPrendasActivas()
+                data.save()
     
     def verDisponibles(self, event):
         self.configuracion.setMostrarDisponibles(self.main_window.ver_disponibles.IsChecked())
@@ -716,7 +717,7 @@ class DetalleClienteController:
     def eliminarAccion(self, event):
         #como los mov no tienen un "id" voy a eliminarlos con la posicon de la tabla
         seleccionado = self.detalle_window.list_resumen_cliente.GetFirstSelected()
-        
+
         if seleccionado != -1:
             movimiento = self.cliente.getMovimientos()[seleccionado]
             if isinstance(movimiento, Compra):
@@ -1316,6 +1317,10 @@ class CarritoController:
         
         try:
             entrega = float(self.window.text_ctrl_1.GetValue())
+
+            if self.window.text_ctrl_2.GetValue() == '':
+                self.window.text_ctrl_2.SetValue(str(entrega))
+            
             paga_con = float(self.window.text_ctrl_2.GetValue())
         except:
             error_dialog = wx.MessageDialog(self.window, "Solo Numeros en Entrega y Paga con", "Advertencia", wx.ICON_INFORMATION)
@@ -1352,6 +1357,8 @@ class CarritoController:
             
             if entrega == 0:
                 self.window.text_ctrl_2.SetValue('0')
+            if self.window.text_ctrl_2.GetValue() == '':
+                self.window.text_ctrl_2.SetValue(str(entrega))
             
             paga_con = float(self.window.text_ctrl_2.GetValue())
         
