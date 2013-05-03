@@ -25,8 +25,11 @@ class InformeTextoFrame(wx.Frame):
     def __set_properties(self):
         # begin wxGlade: InformeTextoFrame.__set_properties
         self.SetTitle("frame_1")
+        self.SetSize((500, 390))
         self.label_titulo.SetFont(wx.Font(25, wx.DEFAULT, wx.NORMAL, wx.NORMAL, 0, ""))
+        self.text_titulo.SetMinSize((500, 280))
         self.text_titulo.SetFont(wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.NORMAL, 0, "MS Shell Dlg 2"))
+        self.panel_1.SetMinSize((484, 305))
         # end wxGlade
 
     def __do_layout(self):
@@ -41,7 +44,6 @@ class InformeTextoFrame(wx.Frame):
         self.panel_1.SetSizer(sizer_1)
         grid_sizer_1.Add(self.panel_1, 1, wx.EXPAND, 0)
         self.SetSizer(grid_sizer_1)
-        grid_sizer_1.Fit(self)
         self.Layout()
         # end wxGlade
 
