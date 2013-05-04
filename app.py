@@ -3,7 +3,12 @@ import models
 import views
 import data
 import datetime
-from wx.lib.pubsub import Publisher as pub
+from wx.lib.pubsub import setuparg1
+from wx.lib.pubsub import pub as pub2
+
+pub = pub2.Publisher()
+
+
 import cPickle as pickle
 
 from models import *
