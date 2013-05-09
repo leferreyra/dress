@@ -437,12 +437,31 @@ class AppController:
         self.agregarClientesActivos()
 
     def prendaAgregadaCarrito(self, message):
-        
-        self.agregarPrendasActivas()   
+        prenda = message.data
+
+        for x in range(0, self.main_window.lista_prendas.GetItemCount()):
+            item = self.main_window.lista_prendas.GetItem(x,0)
+            codigo_prenda = item.GetText()
+            if int(codigo_prenda) == prenda.getCodigo():
+                posicion = x
+                break
+
+        self.main_window.lista_prendas.SetItemBackgroundColour(posicion, "green")
 
     def prendaEliminadaCarrito(self, message):
+        
+        prenda = message.data
 
-        self.agregarPrendasActivas()
+        for x in range(0, self.main_window.lista_prendas.GetItemCount()):
+            item = self.main_window.lista_prendas.GetItem(x,0)
+            codigo_prenda = item.GetText()
+            if int(codigo_prenda) == prenda.getCodigo():
+                posicion = x
+                break
+
+        color = self.main_window.lista_prendas.GetBackgroundColour()
+        self.main_window.lista_prendas.SetItemBackgroundColour(posicion, color)
+
 
 
     def carritoVaciado(self, message):

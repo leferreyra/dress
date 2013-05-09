@@ -574,10 +574,10 @@ class Carrito:
                 if self._descuentos.has_key(prenda):
                     del self._descuentos[prenda]
                 
-                pub.sendMessage("PRENDA_ELIMINADA_CARRITO", self)          
+                pub.sendMessage("PRENDA_ELIMINADA_CARRITO", prenda)          
             else:
                 self._prendas.append(prenda)
-                pub.sendMessage("PRENDA_AGREGADA_CARRITO", self)  
+                pub.sendMessage("PRENDA_AGREGADA_CARRITO", prenda)  
         else:
             raise NameError('prenda_no_disponible')
     
