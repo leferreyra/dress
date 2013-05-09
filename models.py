@@ -468,7 +468,7 @@ class ListaClientes:
                 clientes_activos.append(cliente)
 
         if configuracion.mostrar_tardios:
-            for prenda in self.getClientesTardios():
+            for cliente in self.getClientesTardios():
                 clientes_activos.append(cliente)
        
         if configuracion.mostrar_al_dia:

@@ -482,6 +482,7 @@ class AppController:
                 self.clientes = self.data["clientes"]
                 self.prendas = self.data["prendas"]
                 self.configuracion = self.data["configuracion"]
+                Prenda._index = data.objects['NEW_PRENDA_ID']
                 self.agregarClientesActivos()
                 self.agregarPrendasActivas()
                 data.save()
