@@ -8,7 +8,7 @@ import wx
 # end wxGlade
 
 
-class InformeListaFrame(wx.Frame):
+class InformeGananciasFrame(wx.Frame):
     def __init__(self, *args, **kwds):
         # begin wxGlade: InformeListaFrame.__init__
         kwds["style"] = wx.DEFAULT_FRAME_STYLE
@@ -67,7 +67,7 @@ class InformeListaFrame(wx.Frame):
 if __name__ == "__main__":
     app = wx.PySimpleApp(0)
     wx.InitAllImageHandlers()
-    frame_2 = InformeListaFrame(None, -1, "")
+    frame_2 = InformeGananciasFrame(None, -1, "")
     app.SetTopWindow(frame_2)
     frame_2.Show()
     app.MainLoop()

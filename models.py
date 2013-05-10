@@ -273,6 +273,9 @@ class Cliente:
             if prenda == compra.prenda:
                 return compra
                 break
+    
+    def getPagos(self):
+        return self._pagos
 
 class Prenda:
     """

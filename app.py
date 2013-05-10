@@ -13,6 +13,7 @@ from views.NuevoClienteFrame import NuevoClienteFrame
 from views.DetalleClienteFrame import DetalleClienteFrame
 from views.InformeTextoFrame import InformeTextoFrame
 from views.InformeListaFrame import InformeListaFrame
+from views.InformeGananciasFrame import InformeGananciasFrame
 from views.PrendaFrame import PrendaFrame
 from views.CarritoFrame import CarritoFrame
 from printer import ImpresionComprobante
@@ -202,6 +203,7 @@ class AppController:
         self.main_window.Bind(wx.EVT_MENU, self.listaTelefonosMorosos, self.main_window.informe_lista_telefonos_morosos)
         self.main_window.Bind(wx.EVT_MENU, self.listaCumpleaniosMes, self.main_window.informe_lista_cumpleanios_mes)
         self.main_window.Bind(wx.EVT_MENU, self.informeTotales, self.main_window.informe_totales)
+        self.main_window.Bind(wx.EVT_MENU, self.informeGanancias, self.main_window.informe_pagos)
         
         #suscripcion a eventos de Cliente
         pub.subscribe(self.clienteActualizado, "CAMBIO_CLIENTE")
@@ -620,6 +622,8 @@ class AppController:
 
         controlador = InformeListaController('Informe de Totales', columnas, totales, self.main_window)
 
+    def informeGanancias(self, event):
+        controlador = InformeGananciasController(self.main_window, self.clientes)
 
 class DetalleClienteController:
     """
@@ -1495,6 +1499,71 @@ class CarritoController:
     def onCancelar(self, event):
         self.window.Destroy()
         self.window.Close()
+
+class InformeGananciasController():
+
+    def __init__(self, padre, clientes):
+        
+        self.clientes = clientes
+        self.informe_window = InformeGananciasFrame(padre, -1, "Pagos por Mes")
+        self.informe_window.SetTitle("Pagos por Mes")
+        self.informe_window.Centre()
+        self.initUi()
+        self.connectEvent()
+        self.informe_window.Show()  
+
+    def initUi(self):
+
+        self.informe_window.list_titulo.InsertColumn(0, "Dia", width=150)
+        self.informe_window.list_titulo.InsertColumn(1, "Total", width=150)
+
+    def connectEvent(self):
+        self.informe_window.btn_detalle.Bind(wx.EVT_BUTTON, self.detalleDia)
+        self.informe_window.text_ctrl_1.Bind(wx.EVT_TEXT_ENTER, self.realizarInforme)
+
+    def realizarInforme(self, event):
+        lista_dias = []
+        #try:
+        anio = self.informe_window.text_ctrl_1.GetValue()
+        anio = int(anio)
+        mes = self.informe_window.combo_box_1.GetSelection()
+        mes = int(mes)
+        mes = mes + 1
+        #except:
+        #    error_dialog = wx.MessageDialog(self.informe_window, "Seleccione un mes e indique un ano", "Advertencia", wx.ICON_INFORMATION)
+        #    error_dialog.ShowModal()
+
+        fecha = datetime.date(anio, mes, 1)
+
+        for i in range(0, 31):
+            lista_dias.append(0)
+
+        total = 0
+        for cliente in self.clientes.getClientes():
+            pagos_cliente = cliente.getPagos()
+            for pago in pagos_cliente:
+                if pago.fecha.month == fecha.month and pago.fecha.year == fecha.year:
+                    posicion = pago.fecha.day - 1
+                    lista_dias[posicion] = lista_dias[posicion] + pago.monto
+                    total = total + pago.monto
+        
+        #agregar a la lista
+        self.informe_window.list_titulo.DeleteAllItems()
+        for i in range(1, 32):
+            idx = self.informe_window.list_titulo.GetItemCount()
+            self.informe_window.list_titulo.InsertStringItem(idx, "%s" % i) 
+            self.informe_window.list_titulo.SetStringItem(idx, 1, "%s" % lista_dias[i-1]) 
+
+        #poner total
+        idx = self.informe_window.list_titulo.GetItemCount()
+        self.informe_window.list_titulo.InsertStringItem(idx, "%s" % "TOTAL") 
+        self.informe_window.list_titulo.SetStringItem(idx, 1, "%s" % total)
+
+    def detalleDia(self, event):
+        pass
+
+
+ 
 
 
 
