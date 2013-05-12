@@ -664,7 +664,7 @@ class DetalleClienteController:
         self.detalle_window.text_email.SetValue(self.cliente.getEmail())
 
         fecha_nac = self.cliente.getFechaNacimiento()
-        fecha_calendar = wxDateTimeFromDMY(fecha_nac.day, fecha_nac.month, fecha_nac.year)
+        fecha_calendar = wxDateTimeFromDMY(fecha_nac.day, fecha_nac.month - 1, fecha_nac.year)
         
         self.detalle_window.date_fecha_nacimiento.SetValue(fecha_calendar)
         #deshabilita inicialmente el boton guardar
@@ -782,8 +782,8 @@ class DetalleClienteController:
             self.cliente.setDireccion(str(self.detalle_window.texto_direccion.GetValue()))
         if (self.cliente.getFechaNacimiento() != str(self.detalle_window.date_fecha_nacimiento.GetValue())):
             fecha_wx = self.detalle_window.date_fecha_nacimiento.GetValue() 
-            nueva_fecha = datetime.date(fecha_wx.GetYear(), fecha_wx.GetMonth(), fecha_wx.GetDay())
-            self.cliente.setFechaNacimiento(nueva_fecha) # Hay que crear un objeto date
+            nueva_fecha = datetime.date(fecha_wx.GetYear(), fecha_wx.GetMonth() + 1, fecha_wx.GetDay())
+            self.cliente.setFechaNacimiento(nueva_fecha)
 
 
         #una vez guardado deshabilitamos el boton guardar
@@ -872,7 +872,7 @@ class NuevoClienteController():
         fecha_wx = self.nuevo_window.date_fecha_nacimiento.GetValue()
         direccion = str(self.nuevo_window.texto_direccion.GetValue())
         
-        fecha_nacimiento = datetime.date(fecha_wx.GetYear(), fecha_wx.GetMonth(), fecha_wx.GetDay())
+        fecha_nacimiento = datetime.date(fecha_wx.GetYear(), fecha_wx.GetMonth() + 1, fecha_wx.GetDay())
 
         new_cliente = Cliente(dni, nombre, telefono, email, direccion, fecha_nacimiento)
         try:
@@ -1321,9 +1321,6 @@ class CarritoController:
     
     def realizarTransaccion(self, event):
 
-        comprobante = ImpresionComprobante(self.carrito)
-        comprobante.Imprimir()
-
         if (self.window.radio_box_1.GetSelection() == 0):
             self.ventaCasual()
         if (self.window.radio_box_1.GetSelection() == 1):
@@ -1366,10 +1363,15 @@ class CarritoController:
             cliente_casual.addCompra(new_compra)
             prenda.setCliente(cliente_casual)
 
+        comprobante = ImpresionComprobante(self.carrito, "",  new_pago.monto)
+        comprobante.Imprimir()    
+        
         self.carrito.vaciarCarrito()
         cliente_casual.addPago(new_pago)
 
         data.save()
+
+
 
         self.window.Destroy()
         self.window.Close()
@@ -1421,9 +1423,13 @@ class CarritoController:
                 new_pago = Pago(entrega, cliente)
                 cliente.addPago(new_pago)
         
+        comprobante = ImpresionComprobante(self.carrito, cliente.getNombre(),  new_pago.monto)
+        comprobante.Imprimir()
+
         self.carrito.vaciarCarrito()
 
         data.save()
+
 
         self.window.Destroy()
         self.window.Close()
@@ -1589,12 +1595,11 @@ class InformeGananciasController():
                         if pago.fecha.day == fecha.day and pago.fecha.month == fecha.month and pago.fecha.year == fecha.year:
                             valores.append((cliente.getNombre(), pago.monto))
 
-                controlador_infome = InformeListaController('Detalle', columnas, valores, self.informe_window)                    
+                controlador_infome = InformeListaController('Detalle', columnas, valores, self.informe_window)
 
-
- 
-
-
+            else:
+                error_dialog = wx.MessageDialog(self.informe_window, "No hubo pagos en este dia", "Advertencia", wx.ICON_INFORMATION)
+                error_dialog.ShowModal()
 
 if __name__=='__main__':
     

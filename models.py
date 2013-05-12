@@ -259,7 +259,7 @@ class Cliente:
 
 
     def cumpleAniosEsteMes(self):
-        nacim = self._fecha_nacimiento.month +1
+        nacim = self._fecha_nacimiento.month
         actual = datetime.date.today().month
 
         if nacim == actual:
