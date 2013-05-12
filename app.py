@@ -1552,6 +1552,14 @@ class InformeGananciasController():
                     posicion = pago.fecha.day - 1
                     lista_dias[posicion] = lista_dias[posicion] + pago.monto
                     total = total + pago.monto
+
+        for pago in cliente_casual.getPagos():
+
+            if pago.fecha.month == fecha.month and pago.fecha.year == fecha.year:
+                posicion = pago.fecha.day - 1
+                lista_dias[posicion] = lista_dias[posicion] + pago.monto
+                total = total + pago.monto
+
         
         #agregar a la lista
         self.informe_window.list_titulo.DeleteAllItems()
@@ -1594,6 +1602,10 @@ class InformeGananciasController():
                     for pago in pagos_cliente:
                         if pago.fecha.day == fecha.day and pago.fecha.month == fecha.month and pago.fecha.year == fecha.year:
                             valores.append((cliente.getNombre(), pago.monto))
+        
+                for pago in cliente_casual.getPagos():
+                    if pago.fecha.day == fecha.day and pago.fecha.month == fecha.month and pago.fecha.year == fecha.year:
+                        valores.append(("Cliente Casual", pago.monto))
 
                 controlador_infome = InformeListaController('Detalle', columnas, valores, self.informe_window)
 
