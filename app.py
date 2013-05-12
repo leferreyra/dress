@@ -1523,15 +1523,15 @@ class InformeGananciasController():
 
     def realizarInforme(self, event):
         lista_dias = []
-        #try:
-        anio = self.informe_window.text_ctrl_1.GetValue()
-        anio = int(anio)
-        mes = self.informe_window.combo_box_1.GetSelection()
-        mes = int(mes)
-        mes = mes + 1
-        #except:
-        #    error_dialog = wx.MessageDialog(self.informe_window, "Seleccione un mes e indique un ano", "Advertencia", wx.ICON_INFORMATION)
-        #    error_dialog.ShowModal()
+        try:
+            anio = self.informe_window.text_ctrl_1.GetValue()
+            anio = int(anio)
+            mes = self.informe_window.combo_box_1.GetSelection()
+            mes = int(mes)
+            mes = mes + 1
+        except:
+            error_dialog = wx.MessageDialog(self.informe_window, "Seleccione un mes e indique un ano", "Advertencia", wx.ICON_INFORMATION)
+            error_dialog.ShowModal()
 
         fecha = datetime.date(anio, mes, 1)
 
@@ -1560,7 +1560,36 @@ class InformeGananciasController():
         self.informe_window.list_titulo.SetStringItem(idx, 1, "%s" % total)
 
     def detalleDia(self, event):
-        pass
+        seleccionado = self.informe_window.list_titulo.GetFirstSelected()
+
+        if seleccionado != -1:
+            value = self.informe_window.list_titulo.GetItem(seleccionado,1)
+            valor = value.GetText()
+            valor = float(valor)
+            
+            day = self.informe_window.list_titulo.GetItem(seleccionado,0)
+            dia = day.GetText()
+
+
+            if valor != 0 and dia != "TOTAL":
+                
+                anio = self.informe_window.text_ctrl_1.GetValue()
+                anio = int(anio)
+                mes = self.informe_window.combo_box_1.GetSelection()
+                mes = int(mes)
+                mes = mes + 1
+                fecha = datetime.date(anio, mes, int(dia))
+                
+                columnas = ["Cliente", "Monto"]
+                valores = []
+                
+                for cliente in self.clientes.getClientes():
+                    pagos_cliente = cliente.getPagos()
+                    for pago in pagos_cliente:
+                        if pago.fecha.day == fecha.day and pago.fecha.month == fecha.month and pago.fecha.year == fecha.year:
+                            valores.append((cliente.getNombre(), pago.monto))
+
+                controlador_infome = InformeListaController('Detalle', columnas, valores, self.informe_window)                    
 
 
  
