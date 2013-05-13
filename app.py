@@ -1513,6 +1513,7 @@ class InformeGananciasController():
         self.clientes = clientes
         self.informe_window = InformeGananciasFrame(padre, -1, "Pagos por Mes")
         self.informe_window.SetTitle("Pagos por Mes")
+        self.informe_window.SetBackgroundColour(self.informe_window.panel_1.GetBackgroundColour())
         self.informe_window.Centre()
         self.initUi()
         self.connectEvent()
@@ -1610,7 +1611,7 @@ class InformeGananciasController():
                 controlador_infome = InformeListaController('Detalle', columnas, valores, self.informe_window)
 
             else:
-                error_dialog = wx.MessageDialog(self.informe_window, "No hubo pagos en este dia", "Advertencia", wx.ICON_INFORMATION)
+                error_dialog = wx.MessageDialog(self.informe_window, "No hubo pagos en este dia", "Sin Pagos", wx.ICON_INFORMATION)
                 error_dialog.ShowModal()
 
 if __name__=='__main__':
