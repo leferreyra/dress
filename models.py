@@ -249,9 +249,16 @@ class Cliente:
     def getCompraPorPrenda(self, prenda):
         
         for compra in self._compras:
-            if prenda == compra.prenda:
+            if prenda.getCodigo() == compra.prenda.getCodigo():
                 return compra
                 break
+
+    def deleteCompraPorPrenda(self, prenda):
+
+        res = filter(lambda c:c.prenda==prenda, self._compras)
+        compra = res[0]
+        idx = self._compras.index(compra)
+        del self._compras[idx]
 
 class Prenda:
     """
@@ -614,9 +621,3 @@ class Configuracion:
 
 
 
-
-
-
-#Creacion del cliente casual, al que se le asignan ventas casuales.
-
-cliente_casual = Cliente("0", 'cliente_casual', '', '', '', '')

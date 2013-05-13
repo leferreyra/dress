@@ -20,6 +20,10 @@ from printer import ImpresionComprobante
 
 data.load() # Cargar los datos del archivo
 
+#Creacion del cliente casual, al que se le asignan ventas casuales.
+cliente_casual = data.objects['CLIENTE_CASUAL']
+
+
 # Setear NEW_PRENDA_ID
 Prenda._index = data.objects['NEW_PRENDA_ID']
 
@@ -1090,6 +1094,7 @@ class DetallePrendaController:
             cliente = self.prenda.getCliente()
             compra = cliente.getCompraPorPrenda(self.prenda)
             cliente.deleteCompra(compra)
+
             self.prenda.setCliente(None)
 
         data.save()
