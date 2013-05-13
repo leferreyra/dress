@@ -1,7 +1,11 @@
 import datetime
 import string
 import wx
-from wx.lib.pubsub import Publisher as pub
+from wx.lib.pubsub import setuparg1
+from wx.lib.pubsub import pub as pub2
+
+pub = pub2.Publisher()
+
 
 class Movimiento:
     """
@@ -126,15 +130,29 @@ class Cliente:
 
 
     def deleteCompra(self, compra):
+        for x in range(0, len (self._compras)):
+            fecha = self._compras[x].fecha
+            cliente = self._compras[x].cliente
+            prenda = self._compras[x].prenda
+            monto = self._compras[x].monto
 
-        self._compras.remove(compra)
-        pub.sendMessage("COMPRA_ELIMINADA", self)
+            if (compra.fecha == fecha) and (compra.cliente == cliente) and (compra.prenda == prenda) and (compra.monto == monto):
+                del (self._compras[x])
+                pub.sendMessage("COMPRA_ELIMINADA", self)
+                break
 
     
     def deletePago(self, pago):
 
-        self._pagos.remove(pago)
-        pub.sendMessage("PAGO_ELIMINADO", self)
+        for x in range(0, len (self._pagos)):
+            fecha = self._pagos[x].fecha
+            cliente = self._pagos[x].cliente
+            monto = self._pagos[x].monto
+
+            if (pago.fecha == fecha) and (pago.cliente == cliente) and (pago.monto == monto):
+                del (self._pagos[x])
+                pub.sendMessage("PAGO_ELIMINADO", self)
+                break
 
 
     def addCondicional(self, condicional):
@@ -144,8 +162,15 @@ class Cliente:
 
     def deleteCondicional(self, condicional):
 
-        self._condicionales.remove(condicional)
-        pub.sendMessage("CONDICIONALES_ELIMINADOS")
+        for x in range(0, len (self._condicionales)):
+            fecha = self._condicionales[x].fecha
+            cliente = self._condicionales[x].cliente
+            prenda = self._condicionales[x].prenda
+
+            if (condicional.fecha == fecha) and (condicional.cliente == cliente) and (condicional.prenda == prenda):
+                del (self._condicionales[x])
+                pub.sendMessage("CONDICIONALES_ELIMINADOS")
+                break
         
     def deleteCondicionales(self):
 
@@ -360,6 +385,11 @@ class Prenda:
 
         return self._cliente
 
+    def aplicarDescuento(self, descuento):
+        nuevo_precio = (self.getPrecio() * descuento) / 100
+        nuevo_precio = self.getPrecio() - nuevo_precio
+        self.setPrecio(nuevo_precio)
+
 class ListaClientes:
     """
     Coleccion de instancias de Cliente
@@ -543,6 +573,7 @@ class Carrito:
     def __init__(self):
 
         self._prendas = []
+        self._descuentos = {}
 
     def addOrDeletePrenda(self, prenda):
 
@@ -550,6 +581,10 @@ class Carrito:
         if prenda.getEstado() == 'disponible':
             if self.enCarrito(prenda):
                 self._prendas.remove(prenda)
+                
+                if self._descuentos.has_key(prenda):
+                    del self._descuentos[prenda]
+                
                 pub.sendMessage("PRENDA_ELIMINADA_CARRITO", self)          
             else:
                 self._prendas.append(prenda)
@@ -563,8 +598,13 @@ class Carrito:
 
     def vaciarCarrito(self):
         self._prendas = []
+        self._descuentos = {}
 
         pub.sendMessage("CARRITO_VACIADO", self)
+    
+    def getPrendaPorCodigo(self, codigo):
+        return filter(lambda p:p.getCodigo()==codigo, self._prendas)[0]
+
 
     def enCarrito(self, prenda):
 
@@ -577,6 +617,25 @@ class Carrito:
                 flag = True
                 break
         return flag
+
+    def agregarDescuento(self, prenda, descuento):
+        
+        if self._descuentos.has_key(prenda):
+            self._descuentos[prenda] = self._descuentos[prenda] + descuento
+        else:   
+            self._descuentos[prenda] = descuento
+    
+        pub.sendMessage("DESCUENTO_AGREGADO")
+
+    def getDescuentos(self):
+        return self._descuentos
+
+    def aplicarDescuentos(self):
+        claves = self._descuentos.keys()
+
+        for prenda in claves:
+            prenda.aplicarDescuento(self._descuentos[prenda])
+
             
 
 class Configuracion:

@@ -11,10 +11,11 @@ import wx
 class InformeListaFrame(wx.Frame):
     def __init__(self, *args, **kwds):
         # begin wxGlade: InformeListaFrame.__init__
-        kwds["style"] = wx.DEFAULT_FRAME_STYLE ^ wx.RESIZE_BORDER
+        kwds["style"] = wx.DEFAULT_FRAME_STYLE
         wx.Frame.__init__(self, *args, **kwds)
+        self.panel_1 = wx.Panel(self, -1)
+        self.label_titulo = wx.StaticText(self.panel_1, -1, u"TÍTULO")
         self.panel_2 = wx.Panel(self, -1)
-        self.label_titulo = wx.StaticText(self.panel_2, -1, u"TÍTULO")
         self.list_titulo = wx.ListCtrl(self.panel_2, -1, style=wx.LC_REPORT | wx.SUNKEN_BORDER)
 
         self.__set_properties()
@@ -24,20 +25,23 @@ class InformeListaFrame(wx.Frame):
     def __set_properties(self):
         # begin wxGlade: InformeListaFrame.__set_properties
         self.SetTitle("frame_2")
-        self.SetSize((500, 400))
         self.label_titulo.SetFont(wx.Font(25, wx.DEFAULT, wx.NORMAL, wx.NORMAL, 0, ""))
         self.list_titulo.SetFont(wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.NORMAL, 0, "MS Shell Dlg 2"))
         # end wxGlade
 
     def __do_layout(self):
         # begin wxGlade: InformeListaFrame.__do_layout
+        grid_sizer_1 = wx.FlexGridSizer(2, 1, 0, 0)
         sizer_2 = wx.BoxSizer(wx.VERTICAL)
-        sizer_3 = wx.BoxSizer(wx.VERTICAL)
-        sizer_3.Add(self.label_titulo, 0, wx.LEFT | wx.TOP, 7)
-        sizer_3.Add(self.list_titulo, 1, wx.ALL | wx.EXPAND, 10)
-        self.panel_2.SetSizer(sizer_3)
-        sizer_2.Add(self.panel_2, 1, wx.EXPAND, 0)
-        self.SetSizer(sizer_2)
+        sizer_1 = wx.BoxSizer(wx.VERTICAL)
+        sizer_1.Add(self.label_titulo, 0, wx.LEFT | wx.RIGHT | wx.TOP | wx.EXPAND, 7)
+        self.panel_1.SetSizer(sizer_1)
+        grid_sizer_1.Add(self.panel_1, 1, wx.EXPAND, 0)
+        sizer_2.Add(self.list_titulo, 1, wx.ALL | wx.EXPAND, 10)
+        self.panel_2.SetSizer(sizer_2)
+        grid_sizer_1.Add(self.panel_2, 1, wx.EXPAND, 0)
+        self.SetSizer(grid_sizer_1)
+        grid_sizer_1.Fit(self)
         self.Layout()
         # end wxGlade
 

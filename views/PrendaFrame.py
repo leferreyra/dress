@@ -12,13 +12,13 @@ import wx
 class PrendaFrame(wx.Frame):
     def __init__(self, *args, **kwds):
         # begin wxGlade: PrendaFrame.__init__
-        kwds["style"] = wx.DEFAULT_FRAME_STYLE ^ wx.RESIZE_BORDER
+        kwds["style"] = wx.DEFAULT_FRAME_STYLE
         wx.Frame.__init__(self, *args, **kwds)
         self.panel_1 = wx.Panel(self, -1)
         self.label_prenda = wx.StaticText(self.panel_1, -1, "PRENDA")
         self.label_nombre = wx.StaticText(self.panel_1, -1, "Nombre", style=wx.ALIGN_RIGHT)
         self.texto_nombre = wx.TextCtrl(self.panel_1, -1, "")
-        self.label_talle = wx.StaticText(self.panel_1, -1, "Talle", style=wx.ALIGN_CENTRE)
+        self.label_talle = wx.StaticText(self.panel_1, -1, "Talle", style=wx.ALIGN_RIGHT | wx.ALIGN_CENTRE)
         self.texto_talle = wx.TextCtrl(self.panel_1, -1, "")
         self.label_costo = wx.StaticText(self.panel_1, -1, "Costo", style=wx.ALIGN_RIGHT)
         self.texto_costo = wx.TextCtrl(self.panel_1, -1, "")
@@ -49,11 +49,12 @@ class PrendaFrame(wx.Frame):
         self.texto_talle.SetFont(wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.NORMAL, 0, "MS Shell Dlg 2"))
         self.label_costo.SetMinSize((56, 18))
         self.label_costo.SetFont(wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.NORMAL, 0, "Ubuntu"))
-        self.texto_costo.SetMinSize((40, 26))
+        self.texto_costo.SetMinSize((80, 26))
         self.texto_costo.SetFont(wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.NORMAL, 0, "MS Shell Dlg 2"))
         self.label_precio.SetMinSize((46, 18))
         self.label_precio.SetFont(wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.NORMAL, 0, "Ubuntu"))
-        self.texto_precio.SetMinSize((40, 26))
+        self.texto_precio.SetMinSize((80, 26))
+        self.texto_precio.SetFont(wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.NORMAL, 0, "MS Shell Dlg 2"))
         self.label_descripcion.SetFont(wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.NORMAL, 0, "Ubuntu"))
         self.text_descripcion.SetMinSize((400, 78))
         self.label_vendida.SetMinSize((59, 18))
@@ -81,7 +82,7 @@ class PrendaFrame(wx.Frame):
         sizer_5.Add(self.label_talle, 0, wx.LEFT | wx.TOP | wx.ALIGN_RIGHT | wx.ALIGN_CENTER_HORIZONTAL, 10)
         sizer_5.Add(self.texto_talle, 0, wx.LEFT | wx.TOP, 6)
         sizer_2.Add(sizer_5, 1, wx.EXPAND, 0)
-        sizer_5_copy.Add(self.label_costo, 0, wx.LEFT | wx.TOP, 6)
+        sizer_5_copy.Add(self.label_costo, 0, wx.LEFT | wx.TOP, 10)
         sizer_5_copy.Add(self.texto_costo, 0, wx.LEFT | wx.TOP, 6)
         sizer_6.Add(sizer_5_copy, 1, wx.EXPAND, 0)
         sizer_5_copy_1.Add(self.label_precio, 0, wx.LEFT | wx.TOP, 10)

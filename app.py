@@ -3,7 +3,12 @@ import models
 import views
 import data
 import datetime
-from wx.lib.pubsub import Publisher as pub
+from wx.lib.pubsub import setuparg1
+from wx.lib.pubsub import pub as pub2
+
+pub = pub2.Publisher()
+
+
 import cPickle as pickle
 
 from models import *
@@ -46,9 +51,11 @@ class AppController:
 
         self.main_window = MainFrame(None, -1, "A&M Moda")
         self.main_window.SetTitle("A&M Moda")
+
         self.initUi()
         self.connectEvent()
         self.main_window.Show()
+        self.main_window.Maximize()
 
     def initUi(self):
 
@@ -61,6 +68,9 @@ class AppController:
         lista_clientes.InsertColumn(3, "Saldo")# lista_clientes 
 
 
+        #setear color correcto a notebook
+        self.main_window.notebook_1_pane_1.SetBackgroundColour(self.main_window.panel_1.GetBackgroundColour())
+        self.main_window.notebook_1_pane_2.SetBackgroundColour(self.main_window.panel_1.GetBackgroundColour())
         # lista_prendas
         lista_prendas= self.main_window.lista_prendas
 
@@ -97,10 +107,10 @@ class AppController:
         lista_clientes.SetStringItem(idx, 3, "%s" % item.getSaldo()) 
 
         if item.getEstado() == 'moroso':
-            lista_clientes.SetItemBAckgroundColour(idx, "red")
+            lista_clientes.SetItemBackgroundColour(idx, "red")
 
         if item.getEstado() == 'tardio':
-            lista_clientes.SetItemBAckgroundColour(idx, "yellow")
+            lista_clientes.SetItemBackgroundColour(idx, "yellow")
 
 
     def agregarPrendaALista(self, item, indx=-1):
@@ -477,6 +487,13 @@ class AppController:
                 msgbox = wx.MessageDialog(self.main_window, "El archivo de backup se ha cargado satisfactoriamente.", "INFO", style=wx.ICON_INFORMATION)
                 msgbox.ShowModal()
 
+                self.data = data.objects
+                self.clientes = self.data["clientes"]
+                self.prendas = self.data["prendas"]
+                self.configuracion = self.data["configuracion"]
+                self.agregarClientesActivos()
+                self.agregarPrendasActivas()
+                data.save()
     
     def verDisponibles(self, event):
         self.configuracion.setMostrarDisponibles(self.main_window.ver_disponibles.IsChecked())
@@ -632,10 +649,7 @@ class DetalleClienteController:
         self.detalle_window.text_email.SetValue(self.cliente.getEmail())
 
         fecha_nac = self.cliente.getFechaNacimiento()
-        fecha_calendar = wxDateTime()
-        fecha_calendar.SetYear(fecha_nac.year)
-        fecha_calendar.SetMonth(fecha_nac.month)
-        fecha_calendar.SetDay(fecha_nac.day)
+        fecha_calendar = wxDateTimeFromDMY(fecha_nac.day, fecha_nac.month, fecha_nac.year)
         
         self.detalle_window.date_fecha_nacimiento.SetValue(fecha_calendar)
         #deshabilita inicialmente el boton guardar
@@ -712,7 +726,7 @@ class DetalleClienteController:
     def eliminarAccion(self, event):
         #como los mov no tienen un "id" voy a eliminarlos con la posicon de la tabla
         seleccionado = self.detalle_window.list_resumen_cliente.GetFirstSelected()
-        
+
         if seleccionado != -1:
             movimiento = self.cliente.getMovimientos()[seleccionado]
             if isinstance(movimiento, Compra):
@@ -1148,6 +1162,7 @@ class CarritoController:
         pub.subscribe(self.Update, "PRENDA_ELIMINADA_CARRITO")
         pub.subscribe(self.Update, "CARRITO_VACIADO")
         pub.subscribe(self.Update, "CAMBIO_PRENDA")
+        pub.subscribe(self.Update, "DESCUENTO_AGREGADO")
 
         pub.subscribe(self.updateClientes, "CLIENTE_ELIMINADO")
         pub.subscribe(self.updateClientes, "CLIENTE_AGREGADO")
@@ -1157,6 +1172,7 @@ class CarritoController:
         self.window.Bind(wx.EVT_RADIOBOX, self.UpdateTipoCompra, self.window.radio_box_1)
         self.window.button_1.Bind(wx.EVT_BUTTON, self.onRealizarDescuento)
         self.window.button_5.Bind(wx.EVT_BUTTON, self.realizarTransaccion)
+        self.window.button_4.Bind(wx.EVT_BUTTON, self.onCancelar)
 
         self.window.text_ctrl_4.Bind(wx.EVT_SET_FOCUS, self.onSetFocusBuscarClientes)
         self.window.text_ctrl_4.Bind(wx.EVT_KILL_FOCUS, self.onKillFocusBuscarClientes)
@@ -1183,9 +1199,17 @@ class CarritoController:
             idx = self.window.list_ctrl_1.GetItemCount()
             self.window.list_ctrl_1.InsertStringItem(idx, "%d" % prenda.getCodigo())
             self.window.list_ctrl_1.SetStringItem(idx, 1, "%s" % prenda.getNombre())
-            self.window.list_ctrl_1.SetStringItem(idx, 2, "%s" % prenda.getPrecio())
 
-            total += prenda.getPrecio()
+            if self.carrito.getDescuentos().has_key(prenda):
+                descuento = self.carrito.getDescuentos()[prenda]
+                nuevo_precio = (prenda.getPrecio() * descuento) / 100
+                nuevo_precio = prenda.getPrecio() - nuevo_precio
+                self.window.list_ctrl_1.SetStringItem(idx, 2, "%s" % nuevo_precio)
+                total += nuevo_precio
+            else:
+                self.window.list_ctrl_1.SetStringItem(idx, 2, "%s" % prenda.getPrecio())
+                total += prenda.getPrecio()
+            
 
         self.window.label_6.SetLabel("TOTAL: $%g" % total)
 
@@ -1303,6 +1327,10 @@ class CarritoController:
         
         try:
             entrega = float(self.window.text_ctrl_1.GetValue())
+
+            if self.window.text_ctrl_2.GetValue() == '':
+                self.window.text_ctrl_2.SetValue(str(entrega))
+            
             paga_con = float(self.window.text_ctrl_2.GetValue())
         except:
             error_dialog = wx.MessageDialog(self.window, "Solo Numeros en Entrega y Paga con", "Advertencia", wx.ICON_INFORMATION)
@@ -1316,7 +1344,9 @@ class CarritoController:
             error_dialog = wx.MessageDialog(self.window, "No puede pagar con menos de lo que entrega", "Advertencia", wx.ICON_INFORMATION)
             error_dialog.ShowModal()
             return
-
+        
+        self.carrito.aplicarDescuentos()
+        
         for prenda in self.carrito.getPrendas():
             new_compra = Compra(prenda.getPrecio(), prenda, cliente_casual)
             cliente_casual.addCompra(new_compra)
@@ -1334,7 +1364,14 @@ class CarritoController:
         
         try:
             entrega = float(self.window.text_ctrl_1.GetValue())
+            
+            if entrega == 0:
+                self.window.text_ctrl_2.SetValue('0')
+            if self.window.text_ctrl_2.GetValue() == '':
+                self.window.text_ctrl_2.SetValue(str(entrega))
+            
             paga_con = float(self.window.text_ctrl_2.GetValue())
+        
         except:
             error_dialog = wx.MessageDialog(self.window, "Solo Numeros en Entrega y Paga con", "Advertencia", wx.ICON_INFORMATION)
             error_dialog.ShowModal()
@@ -1357,15 +1394,18 @@ class CarritoController:
             item = self.window.list_ctrl_2.GetItem(seleccionado,0)
             dni = item.GetText()
             cliente = self.clientes.getClientePorDni(dni)
-            
+         
+            self.carrito.aplicarDescuentos()
+
             for prenda in self.carrito.getPrendas():
                 new_compra = Compra(prenda.getPrecio(), prenda, cliente)
                 cliente.addCompra(new_compra)
                 prenda.setCliente(cliente)
                 prenda.setCondicional(False)
 
-            new_pago = Pago(entrega, cliente)
-            cliente.addPago(new_pago)
+            if entrega > 0:
+                new_pago = Pago(entrega, cliente)
+                cliente.addPago(new_pago)
         
         self.carrito.vaciarCarrito()
 
@@ -1429,9 +1469,11 @@ class CarritoController:
             item = self.window.list_ctrl_1.GetItem(seleccionado,0)
             codigo_prenda = item.GetText()
             prenda = self.carrito.getPrendaPorCodigo(int(codigo_prenda))
-            nuevo_precio = (prenda.getPrecio() * descuento) / 100
-            nuevo_precio = prenda.getPrecio() - nuevo_precio
-            prenda.setPrecio(nuevo_precio)
+            
+            self.carrito.agregarDescuento(prenda, descuento)
+
+
+            #prenda.setPrecio(nuevo_precio)
 
         else:
             error_dialog = wx.MessageDialog(self.window, "Seleccione una prenda", "Advertencia", wx.ICON_INFORMATION)
@@ -1439,6 +1481,10 @@ class CarritoController:
             return
 
         data.save()
+
+    def onCancelar(self, event):
+        self.window.Destroy()
+        self.window.Close()
 
 
 
