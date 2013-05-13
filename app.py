@@ -3,7 +3,12 @@ import models
 import views
 import data
 import datetime
-from wx.lib.pubsub import Publisher as pub
+from wx.lib.pubsub import setuparg1
+from wx.lib.pubsub import pub as pub2
+
+pub = pub2.Publisher()
+
+
 import cPickle as pickle
 
 from models import *
@@ -20,6 +25,10 @@ from printer import ImpresionComprobante
 
 
 data.load() # Cargar los datos del archivo
+
+#Creacion del cliente casual, al que se le asignan ventas casuales.
+cliente_casual = data.objects['CLIENTE_CASUAL']
+
 
 # Setear NEW_PRENDA_ID
 Prenda._index = data.objects['NEW_PRENDA_ID']
@@ -1123,6 +1132,7 @@ class DetallePrendaController:
             cliente = self.prenda.getCliente()
             compra = cliente.getCompraPorPrenda(self.prenda)
             cliente.deleteCompra(compra)
+
             self.prenda.setCliente(None)
 
         data.save()
