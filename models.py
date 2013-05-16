@@ -263,7 +263,7 @@ class Cliente:
 
 
     def cumpleAniosEsteMes(self):
-        nacim = self._fecha_nacimiento.month +1
+        nacim = self._fecha_nacimiento.month
         actual = datetime.date.today().month
 
         if nacim == actual:
@@ -274,9 +274,19 @@ class Cliente:
     def getCompraPorPrenda(self, prenda):
         
         for compra in self._compras:
-            if prenda == compra.prenda:
+            if prenda.getCodigo() == compra.prenda.getCodigo():
                 return compra
                 break
+    
+    def getPagos(self):
+        return self._pagos
+
+    def deleteCompraPorPrenda(self, prenda):
+
+        res = filter(lambda c:c.prenda==prenda, self._compras)
+        compra = res[0]
+        idx = self._compras.index(compra)
+        del self._compras[idx]
 
 class Prenda:
     """
@@ -472,7 +482,7 @@ class ListaClientes:
                 clientes_activos.append(cliente)
 
         if configuracion.mostrar_tardios:
-            for prenda in self.getClientesTardios():
+            for cliente in self.getClientesTardios():
                 clientes_activos.append(cliente)
        
         if configuracion.mostrar_al_dia:
@@ -578,10 +588,10 @@ class Carrito:
                 if self._descuentos.has_key(prenda):
                     del self._descuentos[prenda]
                 
-                pub.sendMessage("PRENDA_ELIMINADA_CARRITO", self)          
+                pub.sendMessage("PRENDA_ELIMINADA_CARRITO", prenda)          
             else:
                 self._prendas.append(prenda)
-                pub.sendMessage("PRENDA_AGREGADA_CARRITO", self)  
+                pub.sendMessage("PRENDA_AGREGADA_CARRITO", prenda)  
         else:
             raise NameError('prenda_no_disponible')
     
@@ -673,9 +683,3 @@ class Configuracion:
 
 
 
-
-
-
-#Creacion del cliente casual, al que se le asignan ventas casuales.
-
-cliente_casual = Cliente("0", 'cliente_casual', '', '', '', '')

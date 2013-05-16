@@ -18,12 +18,17 @@ from views.NuevoClienteFrame import NuevoClienteFrame
 from views.DetalleClienteFrame import DetalleClienteFrame
 from views.InformeTextoFrame import InformeTextoFrame
 from views.InformeListaFrame import InformeListaFrame
+from views.InformeGananciasFrame import InformeGananciasFrame
 from views.PrendaFrame import PrendaFrame
 from views.CarritoFrame import CarritoFrame
 from printer import ImpresionComprobante
 
 
 data.load() # Cargar los datos del archivo
+
+#Creacion del cliente casual, al que se le asignan ventas casuales.
+cliente_casual = data.objects['CLIENTE_CASUAL']
+
 
 # Setear NEW_PRENDA_ID
 Prenda._index = data.objects['NEW_PRENDA_ID']
@@ -207,6 +212,7 @@ class AppController:
         self.main_window.Bind(wx.EVT_MENU, self.listaTelefonosMorosos, self.main_window.informe_lista_telefonos_morosos)
         self.main_window.Bind(wx.EVT_MENU, self.listaCumpleaniosMes, self.main_window.informe_lista_cumpleanios_mes)
         self.main_window.Bind(wx.EVT_MENU, self.informeTotales, self.main_window.informe_totales)
+        self.main_window.Bind(wx.EVT_MENU, self.informeGanancias, self.main_window.informe_pagos)
         
         #suscripcion a eventos de Cliente
         pub.subscribe(self.clienteActualizado, "CAMBIO_CLIENTE")
@@ -442,12 +448,31 @@ class AppController:
         self.agregarClientesActivos()
 
     def prendaAgregadaCarrito(self, message):
-        
-        self.agregarPrendasActivas()   
+        prenda = message.data
+
+        for x in range(0, self.main_window.lista_prendas.GetItemCount()):
+            item = self.main_window.lista_prendas.GetItem(x,0)
+            codigo_prenda = item.GetText()
+            if int(codigo_prenda) == prenda.getCodigo():
+                posicion = x
+                break
+
+        self.main_window.lista_prendas.SetItemBackgroundColour(posicion, "green")
 
     def prendaEliminadaCarrito(self, message):
+        
+        prenda = message.data
 
-        self.agregarPrendasActivas()
+        for x in range(0, self.main_window.lista_prendas.GetItemCount()):
+            item = self.main_window.lista_prendas.GetItem(x,0)
+            codigo_prenda = item.GetText()
+            if int(codigo_prenda) == prenda.getCodigo():
+                posicion = x
+                break
+
+        color = self.main_window.lista_prendas.GetBackgroundColour()
+        self.main_window.lista_prendas.SetItemBackgroundColour(posicion, color)
+
 
 
     def carritoVaciado(self, message):
@@ -487,6 +512,7 @@ class AppController:
                 self.clientes = self.data["clientes"]
                 self.prendas = self.data["prendas"]
                 self.configuracion = self.data["configuracion"]
+                Prenda._index = data.objects['NEW_PRENDA_ID']
                 self.agregarClientesActivos()
                 self.agregarPrendasActivas()
                 data.save()
@@ -605,6 +631,8 @@ class AppController:
 
         controlador = InformeListaController('Informe de Totales', columnas, totales, self.main_window)
 
+    def informeGanancias(self, event):
+        controlador = InformeGananciasController(self.main_window, self.clientes)
 
 class DetalleClienteController:
     """
@@ -645,7 +673,7 @@ class DetalleClienteController:
         self.detalle_window.text_email.SetValue(self.cliente.getEmail())
 
         fecha_nac = self.cliente.getFechaNacimiento()
-        fecha_calendar = wxDateTimeFromDMY(fecha_nac.day, fecha_nac.month, fecha_nac.year)
+        fecha_calendar = wxDateTimeFromDMY(fecha_nac.day, fecha_nac.month - 1, fecha_nac.year)
         
         self.detalle_window.date_fecha_nacimiento.SetValue(fecha_calendar)
         #deshabilita inicialmente el boton guardar
@@ -763,8 +791,8 @@ class DetalleClienteController:
             self.cliente.setDireccion(str(self.detalle_window.texto_direccion.GetValue()))
         if (self.cliente.getFechaNacimiento() != str(self.detalle_window.date_fecha_nacimiento.GetValue())):
             fecha_wx = self.detalle_window.date_fecha_nacimiento.GetValue() 
-            nueva_fecha = datetime.date(fecha_wx.GetYear(), fecha_wx.GetMonth(), fecha_wx.GetDay())
-            self.cliente.setFechaNacimiento(nueva_fecha) # Hay que crear un objeto date
+            nueva_fecha = datetime.date(fecha_wx.GetYear(), fecha_wx.GetMonth() + 1, fecha_wx.GetDay())
+            self.cliente.setFechaNacimiento(nueva_fecha)
 
 
         #una vez guardado deshabilitamos el boton guardar
@@ -853,7 +881,7 @@ class NuevoClienteController():
         fecha_wx = self.nuevo_window.date_fecha_nacimiento.GetValue()
         direccion = str(self.nuevo_window.texto_direccion.GetValue())
         
-        fecha_nacimiento = datetime.date(fecha_wx.GetYear(), fecha_wx.GetMonth(), fecha_wx.GetDay())
+        fecha_nacimiento = datetime.date(fecha_wx.GetYear(), fecha_wx.GetMonth() + 1, fecha_wx.GetDay())
 
         new_cliente = Cliente(dni, nombre, telefono, email, direccion, fecha_nacimiento)
         try:
@@ -1104,6 +1132,7 @@ class DetallePrendaController:
             cliente = self.prenda.getCliente()
             compra = cliente.getCompraPorPrenda(self.prenda)
             cliente.deleteCompra(compra)
+
             self.prenda.setCliente(None)
 
         data.save()
@@ -1302,9 +1331,6 @@ class CarritoController:
     
     def realizarTransaccion(self, event):
 
-        comprobante = ImpresionComprobante(self.carrito)
-        comprobante.Imprimir()
-
         if (self.window.radio_box_1.GetSelection() == 0):
             self.ventaCasual()
         if (self.window.radio_box_1.GetSelection() == 1):
@@ -1347,10 +1373,15 @@ class CarritoController:
             cliente_casual.addCompra(new_compra)
             prenda.setCliente(cliente_casual)
 
+        comprobante = ImpresionComprobante(self.carrito, "",  new_pago.monto)
+        comprobante.Imprimir()    
+        
         self.carrito.vaciarCarrito()
         cliente_casual.addPago(new_pago)
 
         data.save()
+
+
 
         self.window.Destroy()
         self.window.Close()
@@ -1402,9 +1433,13 @@ class CarritoController:
                 new_pago = Pago(entrega, cliente)
                 cliente.addPago(new_pago)
         
+        comprobante = ImpresionComprobante(self.carrito, cliente.getNombre(),  new_pago.monto)
+        comprobante.Imprimir()
+
         self.carrito.vaciarCarrito()
 
         data.save()
+
 
         self.window.Destroy()
         self.window.Close()
@@ -1481,7 +1516,113 @@ class CarritoController:
         self.window.Destroy()
         self.window.Close()
 
+class InformeGananciasController():
 
+    def __init__(self, padre, clientes):
+        
+        self.clientes = clientes
+        self.informe_window = InformeGananciasFrame(padre, -1, "Pagos por Mes")
+        self.informe_window.SetTitle("Pagos por Mes")
+        self.informe_window.SetBackgroundColour(self.informe_window.panel_1.GetBackgroundColour())
+        self.informe_window.Centre()
+        self.initUi()
+        self.connectEvent()
+        self.informe_window.Show()  
+
+    def initUi(self):
+
+        self.informe_window.list_titulo.InsertColumn(0, "Dia", width=150)
+        self.informe_window.list_titulo.InsertColumn(1, "Total", width=150)
+
+    def connectEvent(self):
+        self.informe_window.btn_detalle.Bind(wx.EVT_BUTTON, self.detalleDia)
+        self.informe_window.text_ctrl_1.Bind(wx.EVT_TEXT_ENTER, self.realizarInforme)
+
+    def realizarInforme(self, event):
+        lista_dias = []
+        try:
+            anio = self.informe_window.text_ctrl_1.GetValue()
+            anio = int(anio)
+            mes = self.informe_window.combo_box_1.GetSelection()
+            mes = int(mes)
+            mes = mes + 1
+        except:
+            error_dialog = wx.MessageDialog(self.informe_window, "Seleccione un mes e indique un ano", "Advertencia", wx.ICON_INFORMATION)
+            error_dialog.ShowModal()
+
+        fecha = datetime.date(anio, mes, 1)
+
+        for i in range(0, 31):
+            lista_dias.append(0)
+
+        total = 0
+        for cliente in self.clientes.getClientes():
+            pagos_cliente = cliente.getPagos()
+            for pago in pagos_cliente:
+                if pago.fecha.month == fecha.month and pago.fecha.year == fecha.year:
+                    posicion = pago.fecha.day - 1
+                    lista_dias[posicion] = lista_dias[posicion] + pago.monto
+                    total = total + pago.monto
+
+        for pago in cliente_casual.getPagos():
+
+            if pago.fecha.month == fecha.month and pago.fecha.year == fecha.year:
+                posicion = pago.fecha.day - 1
+                lista_dias[posicion] = lista_dias[posicion] + pago.monto
+                total = total + pago.monto
+
+        
+        #agregar a la lista
+        self.informe_window.list_titulo.DeleteAllItems()
+        for i in range(1, 32):
+            idx = self.informe_window.list_titulo.GetItemCount()
+            self.informe_window.list_titulo.InsertStringItem(idx, "%s" % i) 
+            self.informe_window.list_titulo.SetStringItem(idx, 1, "%s" % lista_dias[i-1]) 
+
+        #poner total
+        idx = self.informe_window.list_titulo.GetItemCount()
+        self.informe_window.list_titulo.InsertStringItem(idx, "%s" % "TOTAL") 
+        self.informe_window.list_titulo.SetStringItem(idx, 1, "%s" % total)
+
+    def detalleDia(self, event):
+        seleccionado = self.informe_window.list_titulo.GetFirstSelected()
+
+        if seleccionado != -1:
+            value = self.informe_window.list_titulo.GetItem(seleccionado,1)
+            valor = value.GetText()
+            valor = float(valor)
+            
+            day = self.informe_window.list_titulo.GetItem(seleccionado,0)
+            dia = day.GetText()
+
+
+            if valor != 0 and dia != "TOTAL":
+                
+                anio = self.informe_window.text_ctrl_1.GetValue()
+                anio = int(anio)
+                mes = self.informe_window.combo_box_1.GetSelection()
+                mes = int(mes)
+                mes = mes + 1
+                fecha = datetime.date(anio, mes, int(dia))
+                
+                columnas = ["Cliente", "Monto"]
+                valores = []
+                
+                for cliente in self.clientes.getClientes():
+                    pagos_cliente = cliente.getPagos()
+                    for pago in pagos_cliente:
+                        if pago.fecha.day == fecha.day and pago.fecha.month == fecha.month and pago.fecha.year == fecha.year:
+                            valores.append((cliente.getNombre(), pago.monto))
+        
+                for pago in cliente_casual.getPagos():
+                    if pago.fecha.day == fecha.day and pago.fecha.month == fecha.month and pago.fecha.year == fecha.year:
+                        valores.append(("Cliente Casual", pago.monto))
+
+                controlador_infome = InformeListaController('Detalle', columnas, valores, self.informe_window)
+
+            else:
+                error_dialog = wx.MessageDialog(self.informe_window, "No hubo pagos en este dia", "Sin Pagos", wx.ICON_INFORMATION)
+                error_dialog.ShowModal()
 
 if __name__=='__main__':
     

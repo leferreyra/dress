@@ -1,6 +1,6 @@
 import cPickle as pickle
 from os.path import exists
-from models import ListaPrendas, ListaClientes, Configuracion
+from models import ListaPrendas, ListaClientes, Configuracion, Cliente
 
 DATA_FILE = 'dress.dat'
 objects = {}
@@ -34,7 +34,8 @@ if not exists(DATA_FILE):
         'clientes': ListaClientes(),
         'prendas': ListaPrendas(),
         'configuracion': Configuracion(),
-        'NEW_PRENDA_ID': 0
+        'NEW_PRENDA_ID': 0,
+        'CLIENTE_CASUAL': Cliente("0", 'cliente_casual', '', '', '', '')
     }
 
     save()

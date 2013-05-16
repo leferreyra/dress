@@ -58,6 +58,8 @@ class MainFrame(wx.Frame):
         wxglade_tmp_menu.AppendItem(self.informe_lista_cumpleanios_mes)
         self.informe_totales = wx.MenuItem(wxglade_tmp_menu, wx.NewId(), "Totales de ganancias y deudas", "", wx.ITEM_NORMAL)
         wxglade_tmp_menu.AppendItem(self.informe_totales)
+        self.informe_pagos = wx.MenuItem(wxglade_tmp_menu, wx.NewId(), "Informe de pagos", "", wx.ITEM_NORMAL)
+        wxglade_tmp_menu.AppendItem(self.informe_pagos)
         self.frame_menubar.Append(wxglade_tmp_menu, "Informes")
         self.SetMenuBar(self.frame_menubar)
         # Menu Bar end
