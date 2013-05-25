@@ -366,9 +366,19 @@ class AppController:
             item = self.main_window.lista_clientes.GetItem(seleccionado,0)
             dni = item.GetText()
             cliente = self.clientes.getClientePorDni(dni)
+            cliente.deleteCondicionales()
+
+            for movimiento in cliente.getMovimientos():
+                movimiento.cliente = cliente_casual
+            
+                if isinstance(movimiento, Compra):
+                    cliente_casual.addCompra(movimiento)
+                elif isinstance(movimiento, Pago):
+                    cliente_casual.addPago(movimiento)      
+
             self.clientes.deleteCliente(cliente)
 
-        data.save()
+            data.save()
     
     def nuevoCliente(self, event):
         #recibe self para poder agregar la prenda a la lista clientes
@@ -1432,13 +1442,15 @@ class CarritoController:
             if entrega > 0:
                 new_pago = Pago(entrega, cliente)
                 cliente.addPago(new_pago)
+
+            if entrega > 0:
+                comprobante = ImpresionComprobante(self.carrito, cliente.getNombre(),  new_pago.monto)
+            else:
+                comprobante = ImpresionComprobante(self.carrito, cliente.getNombre(), 0)
         
-        comprobante = ImpresionComprobante(self.carrito, cliente.getNombre(),  new_pago.monto)
-        comprobante.Imprimir()
-
-        self.carrito.vaciarCarrito()
-
-        data.save()
+            comprobante.Imprimir()
+            self.carrito.vaciarCarrito()
+            data.save()
 
 
         self.window.Destroy()
