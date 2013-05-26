@@ -423,17 +423,6 @@ class ListaClientes:
 
 
     def deleteCliente(self, cliente):
-
-        cliente.deleteCondicionales()
-
-        for movimiento in cliente.getMovimientos():
-            movimiento.cliente = cliente_casual
-            
-            if isinstance(movimiento, Compra):
-                cliente_casual.addCompra(movimiento)
-            elif isinstance(movimiento, Pago):
-                cliente_casual.addPago(movimiento)      
-
         self._clientes.remove(cliente)
         pub.sendMessage("CLIENTE_ELIMINADO", self)
 
